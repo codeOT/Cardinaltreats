@@ -7,12 +7,11 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface HeroProps {
-  onOpenModal: (p: Product) => void;
   onScrollToShop: () => void;
   onScrollToAbout: () => void;
 }
 
-export function Hero({ onOpenModal, onScrollToShop, onScrollToAbout }: HeroProps){
+export function Hero({ onScrollToShop, onScrollToAbout }: HeroProps){
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
 

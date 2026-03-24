@@ -36,7 +36,9 @@ export interface DBOrder {
   updatedAt:       string;
 }
 
-export async function createOrder(input: CreateOrderInput): Promise<DBOrder & { _id: string }> {
+export async function createOrder(
+  input: CreateOrderInput
+): Promise<Omit<DBOrder, "_id"> & { _id: string }> {
   const orders = await getCollection<DBOrder>("orders");
 
   const now = new Date().toISOString();
@@ -80,7 +82,9 @@ export async function findOrderByReference(reference: string): Promise<DBOrder |
   return (await orders.findOne({ paystackReference: reference })) as DBOrder | null;
 }
 
-export async function getUserOrders(userId: string): Promise<(DBOrder & { _id: string })[]> {
+export async function getUserOrders(
+  userId: string
+): Promise<(Omit<DBOrder, "_id"> & { _id: string })[]> {
   const orders = await getCollection<DBOrder>("orders");
   const result = await orders
     .find({ userId })
@@ -90,5 +94,28 @@ export async function getUserOrders(userId: string): Promise<(DBOrder & { _id: s
   return result.map((o) => ({
     ...o,
     _id: String(o._id),
-  })) as (DBOrder & { _id: string })[];
+  })) as (Omit<DBOrder, "_id"> & { _id: string })[];
+}
+
+export async function getAdminOrderSummary() {
+  const orders = await getCollection<DBOrder>("orders");
+  const all = await orders.find({}).toArray();
+  const totalRevenue = all.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const statusCounts: Record<OrderStatus, number> = {
+    pending: 0,
+    paid: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  };
+  for (const o of all) {
+    const s = (o.status || "processing") as OrderStatus;
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  }
+  return {
+    totalOrders: all.length,
+    totalRevenue,
+    statusCounts,
+  };
 }

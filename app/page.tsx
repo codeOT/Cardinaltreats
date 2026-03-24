@@ -41,7 +41,6 @@ export default function HomePage() {
   return (
     <>
       <Hero
-        onOpenModal={setModal}
         onScrollToShop={() => scrollTo("shop")}
         onScrollToAbout={() => scrollTo("about")}
       />

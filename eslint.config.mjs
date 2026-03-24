@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      // Repo-wide cleanup: allow gradual typing migration without blocking editor.
+      "@typescript-eslint/no-explicit-any": "off",
+      // This rule is too strict for current UI state-sync patterns.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

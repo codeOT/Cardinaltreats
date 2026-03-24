@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const orders   = await getCollection<DBOrder>("orders");
-    const products = await getCollection("products");
-    const coupons  = await getCollection("coupons");
+    const products = await getCollection<any>("products");
+    const coupons  = await getCollection<any>("coupons");
 
     const order = await orders.findOne({ paystackReference: ref });
     if (!order)

@@ -104,7 +104,7 @@ export async function POST(req: Request) {
  
   const userId    = (session && (session.user as any).id) ||
     (guestEmail ? `guest:${guestEmail.toLowerCase()}` : "guest");
-  const userEmail = (session && session.user.email) || guestEmail || null;
+  const userEmail = session?.user?.email || guestEmail || null;
  
   const userName  = (session && (session.user as any).name) || null;
 

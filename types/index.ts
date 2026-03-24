@@ -16,11 +16,11 @@ export interface Product {
   twBorder:   string;
   twAccentBg: string;
   imageUrl?:  string;
-  /** Legacy/overall stock (kept for backward compatibility) */
+  
   stockQty?:  number;
-  /** Stock remaining for 50g option */
+ 
   stockQty50?: number;
-  /** Stock remaining for 100g option */
+  
   stockQty100?: number;
 }
 
@@ -28,7 +28,7 @@ export type ProductField = keyof Product;
 
 export interface CartItem extends Product {
   qty: number;
-  /** Selected pack size in grams (50 or 100). Defaults to 100. */
+ 
   selectedGrams?: number;
   /** Base price for 100g used to recalculate when size changes. */
   basePricePer100?: number;
@@ -95,7 +95,8 @@ export interface Order {
 
 // Coupon — matches your real DB schema
 export interface Coupon {
-  _id:             string;
+  
+  description?:    string;
   code:            string;
   discountPercent: number;   // e.g. 10 = 10% off
   active:          boolean;

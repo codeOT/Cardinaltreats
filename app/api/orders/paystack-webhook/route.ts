@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { findOrderByReference, updateOrderStatus } from "@/lib/orders";
 import { getCollection } from "@/lib/db";
-import type { User } from "@/types";
 import { sendOrderConfirmation } from "@/lib/email";
+
+interface DBUser {
+  _id?: string;
+  email: string;
+}
 
 export async function POST(req: Request) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -39,7 +43,7 @@ export async function POST(req: Request) {
 
   await updateOrderStatus(String(order._id), "processing");
 
-  const users = await getCollection<User>("users");
+  const users = await getCollection<DBUser>("users");
   const user = await users.findOne({ _id: order.userId as any }).catch(() => null);
   const toEmail = user?.email || (order as any).userEmail || null;
 

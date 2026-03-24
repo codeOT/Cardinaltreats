@@ -21,7 +21,7 @@ export function DeliveryBanner({ onShopClick }: DeliveryBannerProps){
             Chat with Our Sales Team
           </h3>
           <p className="text-green-50 text-sm md:text-base max-w-md">
-            Have questions about our premium cashews? Get quick answers or order via WhatsApp. We're here to help!
+            Have questions about our premium cashews? Get quick answers or order via WhatsApp. We&apos;re here to help!
           </p>
         </div>
         <a

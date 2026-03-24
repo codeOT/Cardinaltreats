@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CashewSVG } from "@/app/components/product/CashewSVG";
 import { IcX, IcPlus, IcMinus, IcCart } from "@/app/components/ui/icons";
 import { fmt } from "@/lib/utils";
@@ -14,22 +14,15 @@ interface ProductModalProps {
 
 export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps){
   const [qty, setQty] = useState(1);
-  const [grams, setGrams] = useState<50 | 100>(100);
-  const [stockMsg, setStockMsg] = useState<string | null>(null);
-
   const basePricePer100 = p.price;
-  const unitPrice = Math.round((basePricePer100 * grams) / 100);
-
   const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? 0;
   const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? 0;
   const inStock50 = Number(stock50) > 0;
   const inStock100 = Number(stock100) > 0;
+  const [grams, setGrams] = useState<50 | 100>(inStock100 ? 100 : 50);
+  const [stockMsg, setStockMsg] = useState<string | null>(null);
+  const unitPrice = Math.round((basePricePer100 * grams) / 100);
 
-  // Ensure default selection is available
-  useEffect(() => {
-    if (grams === 100 && !inStock100 && inStock50) setGrams(50);
-    if (grams === 50 && !inStock50 && inStock100) setGrams(100);
-  }, [grams, inStock50, inStock100]);
 
   return (
     <div
