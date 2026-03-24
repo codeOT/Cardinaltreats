@@ -42,7 +42,7 @@ export function Navbar({ onCartOpen }: NavbarProps) {
         </Link>
 
         {/* Nav links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8 ">
           {(["Shop", "Contact"] as const).map((l) => (
             <button
               key={l}
@@ -51,7 +51,7 @@ export function Navbar({ onCartOpen }: NavbarProps) {
                   ? scrollTo("shop")
                   : (window.location.href = "/contact")
               }
-              className={`relative text-sm font-medium transition-colors ${
+              className={`relative text-sm font-medium transition-colors cursor-pointer ${
                 scrolled
                   ? "text-gray-600 hover:text-gray-900"
                   : "text-gray-900 hover:text-black"
