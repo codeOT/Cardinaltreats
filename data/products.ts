@@ -22,8 +22,8 @@ export const PRODUCTS: Product[] = [
     tags: ["Vegan", "Raw", "Gluten Free"],
   },
   {
-    id: 3, slug: "Pepper",
-    name: " Pepper", subtitle: "The Bold One",
+    id: 3, slug: "Pepper Spiced",
+    name: "Pepper Spiced", subtitle: "The Bold One",
     price: 4800, weight: "250g", badge: "Fan Fav",
     tagline: "For those who like it interesting.",
     dotColor: "#44403C", emoji: "🌶️",
@@ -32,8 +32,8 @@ export const PRODUCTS: Product[] = [
     tags: ["Bold", "Spicy", "Protein Rich"],
   },
   {
-    id: 4, slug: "caramel",
-    name: "Caramel", subtitle: "The Indulgent",
+    id: 4, slug: "caramel Glazed",
+    name: "Caramel Glazed", subtitle: "The Indulgent",
     price: 5200, weight: "250g", badge: "Premium",
     tagline: "Treat yourself. You deserve it.",
     dotColor: "#EA580C", emoji: "🍯",
@@ -42,8 +42,8 @@ export const PRODUCTS: Product[] = [
     tags: ["Indulgent", "Artisanal", "Sweet"],
   },
   {
-    id: 5, slug: "cinnamon",
-    name: "Cinnamon", subtitle: "The New One",
+    id: 5, slug: "coconut coated",
+    name: "Coconut Coated", subtitle: "The New One",
     price: 5000, weight: "250g", badge: "New",
     tagline: "Cool snack.",
     dotColor: "#BE185D", emoji: "✨",
