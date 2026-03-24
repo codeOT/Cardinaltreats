@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Cardinal Treats",
     description: "Premium handcrafted cashew snacks made in Nigeria.",
-    images: ["/images/og-image.png"],
+    images: ["/images/ct.png"],
   },
 };
 

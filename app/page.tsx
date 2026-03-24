@@ -16,6 +16,7 @@ import { useProducts } from "@/./context/Productscontext";
 import { useToast } from "@/hooks/useToast";
 import type { Product } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function HomePage() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -32,6 +33,10 @@ export default function HomePage() {
     showToast(`${product.emoji} ${product.name} added to cart!`);
     setModal(null);
   };
+
+  const whatsappNumber = "+234";
+  const whatsappMessage = "Hi! I need support with my order on Cardinal Treats.";
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const handleProductFooterClick = (id: number): void => {
     const p = products.find((p) => p.id === id);
@@ -108,6 +113,23 @@ export default function HomePage() {
       <AnimatePresence>
         {cartOpen && <CartSidebar onClose={() => setCartOpen(false)} />}
       </AnimatePresence>
+
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 right-5 z-[120] bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl w-14 h-14 flex items-center justify-center transition-all hover:scale-105"
+        aria-label="Chat with support on WhatsApp"
+        title="Chat with support"
+      >
+        <Image
+          src="/images/whatsapp.png"
+          alt="WhatsApp Support"
+          width={28}
+          height={28}
+          className="w-7 h-7"
+        />
+      </a>
 
       {toast && <Toast message={toast} />}
     </>
