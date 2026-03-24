@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function CheckoutSuccessPage() {
-  const params = useSearchParams();
-  const reference = params.get("reference") || params.get("trxref") || "";
+  const [reference, setReference] = useState("");
 
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [msg, setMsg] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    setReference(q.get("reference") || q.get("trxref") || "");
+  }, []);
 
   useEffect(() => {
     const run = async () => {

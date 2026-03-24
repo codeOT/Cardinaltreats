@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Order, DeliveryAddress } from "@/types";
 import { fmt } from "@/lib/utils";
@@ -9,7 +9,6 @@ import { fmt } from "@/lib/utils";
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const params = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [addresses, setAddresses] = useState<(DeliveryAddress & { _id?: string })[]>([]);
@@ -33,7 +32,9 @@ export default function AccountPage() {
 
   // If redirected back from Paystack with ?reference=..., confirm payment + send email.
   useEffect(() => {
-    const ref = params.get("reference") || params.get("trxref") || "";
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const ref = q.get("reference") || q.get("trxref") || "";
     if (!ref) return;
     const run = async () => {
       try {
@@ -47,7 +48,7 @@ export default function AccountPage() {
       }
     };
     run();
-  }, [params]);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
