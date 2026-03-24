@@ -49,7 +49,7 @@ export function Navbar({ onCartOpen }: NavbarProps) {
               onClick={() =>
                 l === "Shop"
                   ? scrollTo("shop")
-               : undefined
+                  : (window.location.href = "/contact")
               }
               className={`relative text-sm font-medium transition-colors ${
                 scrolled
@@ -156,12 +156,13 @@ export function Navbar({ onCartOpen }: NavbarProps) {
           >
             Shop
           </button>
-          <button
+          <Link
+            href="/contact"
             onClick={() => setMobileOpen(false)}
-            className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-100"
+            className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-100"
           >
             Contact
-          </button>
+          </Link>
 
           {status === "authenticated" ? (
             <>
