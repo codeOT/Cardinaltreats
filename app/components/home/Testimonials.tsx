@@ -1,7 +1,53 @@
+ "use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { TESTIMONIALS } from "@/data/products";
 import { IcStar } from "@/app/components/ui/icons";
 
 export function Testimonials(){
+  const [popups, setPopups] = useState<
+    Array<{
+      id: string;
+      name: string;
+      location: string;
+      flavour: string;
+    }>
+  >([]);
+
+  const popupItems = useMemo(() => {
+    // Use existing testimonial data as a lightweight "recent orders" feed.
+    // (If you later want real orders, we can replace this with an API call.)
+    return TESTIMONIALS.map((t) => ({ name: t.name, location: t.location, flavour: t.flavour }));
+  }, []);
+
+  useEffect(() => {
+    const pickRandom = () => popupItems[Math.floor(Math.random() * popupItems.length)];
+    const spawn = () => {
+      if (!popupItems.length) return;
+      const picked = pickRandom();
+      const id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const name = picked.name;
+      const location = picked.location;
+      const flavour = picked.flavour;
+
+      setPopups((prev) => [
+        ...prev,
+        { id, name, location, flavour },
+      ]);
+
+      // Remove after animation duration
+      window.setTimeout(() => {
+        setPopups((prev) => prev.filter((p) => p.id !== id));
+      }, 4200);
+    };
+
+    // Start with one popup and then rotate
+    spawn();
+    const interval = window.setInterval(spawn, 6500);
+    return () => window.clearInterval(interval);
+  }, [popupItems]);
+
   return (
     <section className="bg-white py-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -45,6 +91,38 @@ export function Testimonials(){
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Floating "recent order" popups */}
+      <div className="fixed left-4 bottom-4 z-[140] pointer-events-none space-y-3">
+        <AnimatePresence initial={false}>
+          {popups.map((p, idx) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.98 }}
+              transition={{ duration: 0.35 }}
+              style={{
+                maxWidth: 290,
+                // small stagger so multiple toasts don't overlap visually
+                marginTop: idx * 2,
+              }}
+            >
+              <div className="pointer-events-none bg-white border border-stone-200 shadow-lg rounded-2xl px-4 py-3">
+                <p className="text-[11px] text-amber-700 font-bold uppercase tracking-widest mb-1">
+                  Recently ordered
+                </p>
+                <p className="text-sm font-semibold text-stone-900 leading-tight">
+                  {p.name} from {p.location}
+                </p>
+                <p className="text-xs text-stone-500 mt-1">
+                  Ordered: <span className="font-semibold text-stone-700">{p.flavour}</span>
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </section>
   );

@@ -30,10 +30,10 @@ export default function ContactPage() {
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <p className="text-stone-400 text-xs mb-1">Email</p>
                 <a
-                  href="mailto:codeot17@gmail.com"
+                  href="mailto:sales@cardinaltorch.com"
                   className="font-semibold text-stone-800 hover:text-amber-600"
                 >
-                  codeot17@gmail.com
+                  sales@cardinaltorch.com
                 </a>
               </div>
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
