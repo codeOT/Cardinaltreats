@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { fmt } from "@/lib/utils";
 import type { DeliveryAddress } from "@/types";
+import Link from "next/link";
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
@@ -493,7 +494,16 @@ export default function CheckoutPage() {
               />
               <span>
                 I understand that orders are confirmed once payment is successful.
-                Payments are generally non-refundable 
+                Payments are generally non-refundable after processing.
+                I have read the{" "}
+                <Link href="/policies" target="_blank" className="text-amber-700 font-semibold underline">
+                  Refund & Delivery Policy
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy-policy" target="_blank" className="text-amber-700 font-semibold underline">
+                  Privacy Policy
+                </Link>
+                .
               </span>
             </label>
 

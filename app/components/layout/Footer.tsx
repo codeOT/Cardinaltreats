@@ -1,5 +1,6 @@
 import { PRODUCTS } from "@/data/products";
 import Image from "next/image";
+import Link from "next/link";
 
 interface FooterProps {
   onProductClick: (id: number) => void;
@@ -63,20 +64,21 @@ export function Footer({ onProductClick }: FooterProps) {
               Company
             </p>
             <ul className="space-y-2.5">
-              {[
-                "About Us",
-                "Wholesale",
-                "Sustainability",
-                "Contact",
-                "FAQ",
-                "Privacy Policy",
-              ].map((l) => (
-                <li key={l}>
-                  <a className="text-sm text-stone-500 hover:text-stone-900 transition-colors cursor-pointer">
-                    {l}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/policies" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">
+                  Refund & Delivery Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
