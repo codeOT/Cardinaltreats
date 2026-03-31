@@ -12,13 +12,19 @@ export function Testimonials(){
       name: string;
       location: string;
       flavour: string;
+      time: string;
     }>
   >([]);
 
   const popupItems = useMemo(() => {
     // Use existing testimonial data as a lightweight "recent orders" feed.
     // (If you later want real orders, we can replace this with an API call.)
-    return TESTIMONIALS.map((t) => ({ name: t.name, location: t.location, flavour: t.flavour }));
+    return TESTIMONIALS.map((t) => ({
+      name: t.name,
+      location: t.location,
+      flavour: t.flavour,
+      time: t.time,
+    }));
   }, []);
 
   useEffect(() => {
@@ -30,10 +36,11 @@ export function Testimonials(){
       const name = picked.name;
       const location = picked.location;
       const flavour = picked.flavour;
+      const time = picked.time;
 
       setPopups((prev) => [
         ...prev,
-        { id, name, location, flavour },
+        { id, name, location, flavour, time },
       ]);
 
       // Remove after animation duration
@@ -61,7 +68,7 @@ export function Testimonials(){
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, i) => (
+          {TESTIMONIALS.slice(0, 3).map((t, i) => (
             <div
               key={i}
               className="group bg-stone-50 hover:bg-amber-50 rounded-3xl p-7 border border-stone-100 hover:border-amber-200 transition-all duration-300 cursor-default"
@@ -117,7 +124,7 @@ export function Testimonials(){
                   {p.name} from {p.location}
                 </p>
                 <p className="text-xs text-stone-500 mt-1">
-                  Ordered: <span className="font-semibold text-stone-700">{p.flavour}</span>
+                  Ordered: <span className="font-semibold text-stone-700">{p.flavour}</span> · {p.time}
                 </p>
               </div>
             </motion.div>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { IcArrow } from "@/app/components/ui/icons";
-import type { Product } from "@/types";
+// type interface not used
+// import type { Product } from "@/types";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -130,39 +131,7 @@ export function Hero({ onScrollToShop, onScrollToAbout }: HeroProps){
           ))}
         </div>
 
-        {/* Navigation arrows (optional) */}
-        {/* <button
-          onClick={() => {
-            setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
-            setIsAutoPlay(false);
-            setTimeout(() => setIsAutoPlay(true), 6000);
-          }}
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/30 hover:bg-white/50 text-white transition-all"
-          aria-label="Previous image"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <button
-          onClick={() => {
-            setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-            setIsAutoPlay(false);
-            setTimeout(() => setIsAutoPlay(true), 6000);
-          }}
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/30 hover:bg-white/50 text-white transition-all"
-          aria-label="Next image"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button> */}
-
-        {/* Image counter */}
-        {/* <div className="absolute top-6 right-6 px-4 py-2 bg-black/50 text-white text-sm rounded-full z-10">
-          {currentImageIndex + 1} / {heroImages.length}
-        </div> */}
+       
       </div>
     </section>
   );

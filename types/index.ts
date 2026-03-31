@@ -111,6 +111,7 @@ export interface Testimonial {
   location: string;
   text:    string;
   flavour: string;
+  time:    string;
 }
 
 export interface StatItem {
