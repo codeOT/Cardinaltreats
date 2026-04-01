@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Navbar } from "@/app/components/layout/Navbar";
-import { Footer } from "@/app/components/layout/Footer";
-import { CartSidebar } from "@/app/components/cart/CartSidebar";
+// import { Footer } from "@/app/components/layout/Footer";
+// import { CartSidebar } from "@/app/components/cart/CartSidebar";
 import Link from "next/link";
 
 export default function PoliciesPage() {
@@ -46,12 +46,20 @@ export default function PoliciesPage() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="font-semibold text-stone-900">Return Policy</h2>
+            <ul className="text-sm text-stone-600 leading-relaxed list-disc pl-5 space-y-2">
+              <li>Food items are generally non-returnable once delivered.</li>
+                <li>If items arrive damaged, contact support within 24 hours with evidence for review.</li>
+              
+         
+            </ul>
+          </section>
+          <section className="space-y-3">
             <h2 className="font-semibold text-stone-900">Refund & Cancellation Policy</h2>
             <ul className="text-sm text-stone-600 leading-relaxed list-disc pl-5 space-y-2">
-              <li>Food items are generally non-refundable once processing begins.</li>
-              <li>Orders cannot be cancelled after they have been packed or dispatched.</li>
+              <li>Orders cannot be cancelled after they have been dispatched.</li>
               <li>If we cannot fulfill your order, we will issue a full refund for affected items.</li>
-              <li>If items arrive damaged, contact support within 24 hours with evidence for review.</li>
+         
             </ul>
           </section>
 

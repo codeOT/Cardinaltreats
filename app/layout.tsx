@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Providers from "@/app/auth/Sessionwrapper"; 
 import { LayoutWrapper } from "@/app/components/LayoutWrapper";
+import { CookieConsent } from "@/app/components/ui/CookieConsent";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <LayoutWrapper>
             {children}
+            <CookieConsent />
           </LayoutWrapper>
         </Providers>
       </body>

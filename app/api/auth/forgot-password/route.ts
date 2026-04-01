@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getCollection } from "@/lib/db";
 import { sendPasswordResetCodeEmail } from "@/lib/email";
+import { applyRateLimit } from "@/lib/rate-limit";
 import type { ObjectId } from "mongodb";
 
 interface DBUser {
@@ -24,6 +25,9 @@ function hashCode(code: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = applyRateLimit(req, "auth-forgot-password", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     const { email } = await req.json();
     const normalized = String(email || "").trim().toLowerCase();

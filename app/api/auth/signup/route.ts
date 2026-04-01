@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getCollection } from "@/lib/db";
+import { applyRateLimit } from "@/lib/rate-limit";
 import type { ObjectId } from "mongodb";
 
 interface DBUser {
@@ -14,6 +15,9 @@ interface DBUser {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = applyRateLimit(req, "auth-signup", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     const { name, email, password } = await req.json();
 

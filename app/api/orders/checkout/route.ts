@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getCollection } from "@/lib/db";
+import { applyRateLimit } from "@/lib/rate-limit";
 import type { Coupon, DeliveryAddress, OrderItem, Product } from "@/types";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const limited = applyRateLimit(req, "orders-checkout", 20, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const session = await getServerSession(authOptions);
   const body = await req.json().catch(() => null);
   const items = (body?.items || []) as OrderItem[];

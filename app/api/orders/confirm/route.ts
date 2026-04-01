@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import type { DBOrder } from "@/lib/orders";
 import { findOrderByReference } from "@/lib/orders";
 import { sendOrderConfirmation } from "@/lib/email";
+import { applyRateLimit } from "@/lib/rate-limit";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const limited = applyRateLimit(req, "orders-confirm", 30, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const body = await req.json().catch(() => null);
   const reference = String(body?.reference || "").trim();
   if (!reference) {
