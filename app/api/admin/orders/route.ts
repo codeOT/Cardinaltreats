@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin";
+import { requireOrdersStaff } from "@/lib/admin";
 import type { DeliveryAddress, Order } from "@/types";
 
 export async function GET() {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) {
+  const { ok } = await requireOrdersStaff();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

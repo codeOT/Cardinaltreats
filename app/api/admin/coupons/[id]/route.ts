@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getCollection } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin";
+import { requireFullAdmin } from "@/lib/admin";
 import type { Coupon } from "@/types";
 
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) {
+  const { ok } = await requireFullAdmin();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -50,8 +50,8 @@ export async function DELETE(
   _req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) {
+  const { ok } = await requireFullAdmin();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

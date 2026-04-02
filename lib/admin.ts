@@ -1,23 +1,35 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import {
+  computeStaffAccess,
+  type StaffAccessLevel,
+} from "@/lib/staff-access";
 
-function parseAdminEmails(val: string | undefined): string[] {
-  if (!val) return [];
-  return val
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
+export type { StaffAccessLevel };
 
-export async function requireAdmin() {
+export async function requireStaff(minimum: "orders" | "full") {
   const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  const role = (session?.user as any)?.role as string | undefined;
-  const adminEmails = parseAdminEmails(process.env.ADMIN_EMAILS);
-
-  const isAdmin =
-    role === "admin" || (!!email && adminEmails.includes(email));
-
-  return { session, isAdmin };
+  const email = session?.user?.email ?? null;
+  const role =
+    (session?.user as { role?: string } | undefined)?.role ?? null;
+  const level = computeStaffAccess({ email, role });
+  const ok =
+    minimum === "full"
+      ? level === "full"
+      : level === "full" || level === "orders";
+  return { session, level, ok };
 }
 
+export async function requireFullAdmin() {
+  return requireStaff("full");
+}
+
+export async function requireOrdersStaff() {
+  return requireStaff("orders");
+}
+
+/** @deprecated Use requireFullAdmin or requireOrdersStaff */
+export async function requireAdmin() {
+  const { session, ok } = await requireFullAdmin();
+  return { session, isAdmin: ok };
+}

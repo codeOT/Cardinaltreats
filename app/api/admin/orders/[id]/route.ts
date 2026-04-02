@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getCollection } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin";
+import { requireOrdersStaff } from "@/lib/admin";
 import type { Order, OrderStatus } from "@/types";
 
 export async function PATCH(
@@ -9,8 +9,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) {
+  const { ok } = await requireOrdersStaff();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

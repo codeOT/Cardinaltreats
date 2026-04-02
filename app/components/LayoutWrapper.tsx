@@ -4,6 +4,7 @@ import { Navbar } from "@/app/components/layout/Navbar";
 import { Footer } from "@/app/components/layout/Footer";
 import { useState } from "react";
 import React from "react";
+import { usePathname } from "next/navigation";
 import { useProducts } from "@/context/Productscontext";
 import { ProductModal } from "@/app/components/product/ProductModal";
 import { CartSidebar } from "@/app/components/cart/CartSidebar";
@@ -11,6 +12,9 @@ import { useCart } from "@/context/CartContext";
 import type { Product } from "@/types";
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAdminArea = pathname?.startsWith("/admin") ?? false;
+
   const [cartOpen, setCartOpen] = useState(false);
   const [modal, setModal] = useState<Product | null>(null);
   const { products } = useProducts();
@@ -25,6 +29,10 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     addToCart(product, qty);
     setModal(null);
   };
+
+  if (isAdminArea) {
+    return <main className="min-h-screen">{children}</main>;
+  }
 
   return (
     <>

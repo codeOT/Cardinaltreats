@@ -1,11 +1,43 @@
 "use client";
 
 import useSWR from "swr";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect } from "react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AdminInventoryPage() {
-  const { data, error } = useSWR("/api/admin/inventory", fetcher);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { data, error } = useSWR(
+    session?.user?.staffAccess === "full" ? "/api/admin/inventory" : null,
+    fetcher
+  );
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (session?.user?.staffAccess !== "full") {
+      router.replace("/admin");
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <p className="text-sm text-stone-500">Loading…</p>
+      </div>
+    );
+  }
+
+  if (session?.user?.staffAccess !== "full") {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <p className="text-sm text-stone-500">Redirecting…</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -30,6 +62,12 @@ export default function AdminInventoryPage() {
   return (
     <div className="min-h-screen bg-stone-50 py-10 px-6">
       <div className="max-w-6xl mx-auto space-y-8">
+        <Link
+          href="/admin"
+          className="inline-flex text-sm font-semibold text-amber-700 hover:text-amber-600 mb-2"
+        >
+          ← Back to dashboard
+        </Link>
         <div>
           <h1 className="font-display text-3xl font-black text-stone-900">
             Inventory & Orders

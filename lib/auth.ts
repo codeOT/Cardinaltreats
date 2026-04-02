@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { getCollection } from "@/lib/db";
+import { computeStaffAccess } from "@/lib/staff-access";
 import type { ObjectId } from "mongodb";
 
 interface DBUser {
@@ -11,7 +12,7 @@ interface DBUser {
   email:     string;
   password?: string;
   provider?: "credentials" | "google";
-  role?:     "customer" | "admin";
+  role?:     "customer" | "admin" | "order_manager";
   createdAt: string;
 }
 
@@ -128,14 +129,26 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      const emailForAccess =
+        typeof token.email === "string"
+          ? token.email
+          : typeof user?.email === "string"
+            ? user.email
+            : null;
+      token.staffAccess = computeStaffAccess({
+        email: emailForAccess,
+        role: typeof token.role === "string" ? token.role : null,
+      });
+
       return token;
     },
 
     // ── session: expose userId + role on the client session object ────────────
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id?: string   }).id   = (token.userId ?? token.sub) as string;
-        (session.user as { role?: string }).role  = (token.role ?? "customer")  as string;
+        session.user.id = (token.userId ?? token.sub) as string;
+        session.user.role = (token.role ?? "customer") as string;
+        session.user.staffAccess = token.staffAccess ?? null;
       }
       return session;
     },

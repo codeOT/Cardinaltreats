@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin";
+import { requireFullAdmin } from "@/lib/admin";
 import type { Product } from "@/types";
 import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
 
 export async function POST() {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) {
+  const { ok } = await requireFullAdmin();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
