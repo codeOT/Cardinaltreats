@@ -43,7 +43,7 @@ export default function CheckoutSuccessPage() {
         setStatus("ok");
         setMsg(
           data.emailSent
-            ? "Order confirmed. We sent your order details to your email."
+            ? "Order confirmed. We sent your order details to your email or check your spam folder."
             : data.alreadySent
               ? "Order confirmed. Email already sent."
               : "Order confirmed, but we could not send an email."

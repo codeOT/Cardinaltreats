@@ -1,15 +1,21 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import type { DBOrder } from "@/lib/orders";
 
-const transporter = nodemailer.createTransport({
-  host:   process.env.EMAIL_HOST,
-  port:   Number(process.env.EMAIL_PORT ?? 587),
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+  return new Resend(apiKey);
+}
+
+function getFromEmail() {
+  return (
+    process.env.EMAIL_FROM ||
+    process.env.RESEND_FROM_EMAIL ||
+    "Cardinal Treats <onboarding@resend.dev>"
+  );
+}
 
 // ─── Order confirmation ───────────────────────────────────────────────────────
 export async function sendOrderConfirmation(order: DBOrder): Promise<{
@@ -83,7 +89,7 @@ export async function sendOrderConfirmation(order: DBOrder): Promise<{
         <tr>
           <td style="background:#F59E0B;padding:32px 40px;text-align:center;">
             <h1 style="margin:0;color:#fff;font-size:28px;font-weight:900;letter-spacing:-0.5px;">
-              Cardinal<span style="opacity:.7;">.</span>Treats
+              Cardinal Treats
             </h1>
             <p style="margin:8px 0 0;color:rgba(255,255,255,.85);font-size:14px;">
               Order Confirmation
@@ -129,7 +135,7 @@ export async function sendOrderConfirmation(order: DBOrder): Promise<{
             <p style="margin:0;color:#78716c;font-size:13px;line-height:1.6;">
               Questions? Contact us at
               <a href="mailto:hello@cardinaltreats.com" style="color:#F59E0B;">
-                hello@cardinaltreats.com
+                sales@cardinaltorch.com 
               </a>
             </p>
           </td>
@@ -150,17 +156,21 @@ export async function sendOrderConfirmation(order: DBOrder): Promise<{
 </body>
 </html>`;
 
-  const info: any = await transporter.sendMail({
-    from:    process.env.EMAIL_FROM,
-    to,
+  const resend = getResendClient();
+  const { data, error } = await resend.emails.send({
+    from: getFromEmail(),
+    to: [to],
     subject: `Order Confirmed — ${ref} | Cardinal Treats`,
     html,
   });
+  if (error) {
+    throw new Error(error.message || "Resend failed to send order confirmation email");
+  }
 
   return {
-    messageId: info?.messageId,
-    accepted: Array.isArray(info?.accepted) ? info.accepted : undefined,
-    rejected: Array.isArray(info?.rejected) ? info.rejected : undefined,
+    messageId: data?.id,
+    accepted: [to],
+    rejected: [],
   };
 }
 
@@ -214,12 +224,16 @@ export async function sendStatusUpdate(order: DBOrder): Promise<void> {
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from:    process.env.EMAIL_FROM,
-    to,
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: getFromEmail(),
+    to: [to],
     subject: `Order ${statusLabel} — ${ref} | Cardinal Treats`,
     html,
   });
+  if (error) {
+    throw new Error(error.message || "Resend failed to send status update email");
+  }
 }
 
 // ─── Password reset code email ────────────────────────────────────────────────
@@ -277,10 +291,14 @@ export async function sendPasswordResetCodeEmail(params: {
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
-    to,
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: getFromEmail(),
+    to: [to],
     subject: "Your 6-digit password reset code | Cardinal Treats",
     html,
   });
+  if (error) {
+    throw new Error(error.message || "Resend failed to send password reset email");
+  }
 }

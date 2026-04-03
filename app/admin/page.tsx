@@ -818,6 +818,12 @@ export default function AdminPage(){
   const [teamRole, setTeamRole] = useState<"order_manager" | "admin">("order_manager");
   const [teamSaving, setTeamSaving] = useState(false);
 
+  // Convert a Google-created account into password (credentials) login.
+  // After conversion, Google sign-in is blocked by auth guard in `lib/auth.ts`.
+  const [convertEmail, setConvertEmail] = useState("codeot17@gmail.com");
+  const [convertPassword, setConvertPassword] = useState("");
+  const [convertSaving, setConvertSaving] = useState(false);
+
   const [pwdCurrent, setPwdCurrent] = useState("");
   const [pwdNew, setPwdNew] = useState("");
   const [pwdConfirm, setPwdConfirm] = useState("");
@@ -1020,6 +1026,33 @@ export default function AdminPage(){
       showToast(err instanceof Error ? `❌ ${err.message}` : "❌ Failed");
     } finally {
       setTeamSaving(false);
+    }
+  };
+
+  const handleConvertGoogleToPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = convertEmail.trim().toLowerCase();
+    if (!email) return;
+    if (!convertPassword || convertPassword.length < 6) {
+      showToast("❌ Password must be at least 6 characters");
+      return;
+    }
+
+    setConvertSaving(true);
+    try {
+      const res = await fetch("/api/admin/users/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: convertPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Failed");
+      showToast("✅ Login converted. Use /admin/login with the new password.");
+      setConvertPassword("");
+    } catch (err) {
+      showToast(err instanceof Error ? `❌ ${err.message}` : "❌ Failed");
+    } finally {
+      setConvertSaving(false);
     }
   };
 
@@ -1412,6 +1445,42 @@ export default function AdminPage(){
                     {teamSaving ? "Creating…" : "Create account"}
                   </button>
                 </form>
+
+                <div className="border-t border-stone-200 pt-5 space-y-3">
+                  <h3 className="text-lg font-bold text-stone-900">
+                    Convert Google to password login
+                  </h3>
+                  <p className="text-sm text-stone-600">
+                    Disables Google sign-in for the converted account. The user must sign in using <strong>/admin/login</strong> + password.
+                  </p>
+                  <form onSubmit={handleConvertGoogleToPassword} className="space-y-4">
+                    <div>
+                      <Label>Email</Label>
+                      <Input
+                        value={convertEmail}
+                        onChange={setConvertEmail}
+                        placeholder="email@example.com"
+                        type="email"
+                      />
+                    </div>
+                    <div>
+                      <Label>Password</Label>
+                      <Input
+                        value={convertPassword}
+                        onChange={setConvertPassword}
+                        placeholder="Min 6 characters"
+                        type="password"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={convertSaving}
+                      className="w-full py-3 rounded-xl bg-amber-600 text-stone-950 text-sm font-bold hover:bg-amber-500 disabled:opacity-50"
+                    >
+                      {convertSaving ? "Converting…" : "Convert login"}
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
 
