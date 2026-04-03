@@ -248,7 +248,7 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
             }}
           >
             {/* Delivery progress */}
-            <div
+            {/* <div
               style={{
                 background: "#fff", borderRadius: 16, padding: "12px 14px",
                 border: "1px solid #e7e5e4", marginBottom: 16,
@@ -274,7 +274,7 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                   }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Total */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
