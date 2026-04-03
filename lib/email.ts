@@ -302,3 +302,70 @@ export async function sendPasswordResetCodeEmail(params: {
     throw new Error(error.message || "Resend failed to send password reset email");
   }
 }
+
+// ─── Signup email verification code ────────────────────────────────────────────
+export async function sendSignupVerificationCodeEmail(params: {
+  to: string;
+  code: string;
+  name?: string | null;
+}): Promise<void> {
+  const { to, code, name } = params;
+  const firstName = name?.split(" ")[0] || "there";
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f9f8f7;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="560" cellpadding="0" cellspacing="0"
+        style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#F59E0B;padding:30px 40px;text-align:center;">
+            <h1 style="margin:0;color:#fff;font-size:26px;font-weight:900;">
+              Cardinal Treats
+            </h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,.9);font-size:14px;">
+              Verify your email
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 8px;font-size:20px;font-weight:800;color:#1c1917;">
+              Hi ${firstName},
+            </p>
+            <p style="margin:0 0 18px;color:#57534e;font-size:14px;line-height:1.6;">
+              Use this 6-digit code to verify your account email. This code expires in 15 minutes.
+            </p>
+            <div style="background:#fafaf9;border:1.5px solid #e7e5e4;border-radius:16px;padding:16px 20px;text-align:center;margin-bottom:18px;">
+              <p style="margin:0;color:#a8a29e;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;">
+                Verification Code
+              </p>
+              <p style="margin:8px 0 0;color:#1c1917;font-size:32px;letter-spacing:0.25em;font-weight:900;font-family:monospace;">
+                ${code}
+              </p>
+            </div>
+            <p style="margin:0;color:#78716c;font-size:12px;">
+              If you did not create this account, you can ignore this email.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: getFromEmail(),
+    to: [to],
+    subject: "Your 6-digit email verification code | Cardinal Treats",
+    html,
+  });
+  if (error) {
+    throw new Error(error.message || "Resend failed to send verification email");
+  }
+}

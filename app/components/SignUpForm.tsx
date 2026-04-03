@@ -34,6 +34,11 @@ export default function SignUpForm() {
   const [loading,  setLoading]  = useState(false);
   const [gLoading, setGLoading] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
+  const [success,  setSuccess]  = useState<string | null>(null);
+  const [verifyMode, setVerifyMode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleGoogle = async () => {
     setGLoading(true);
@@ -44,6 +49,7 @@ export default function SignUpForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     const res  = await fetch("/api/auth/signup", {
       method:  "POST",
@@ -58,19 +64,67 @@ export default function SignUpForm() {
       return;
     }
 
-    // Auto sign-in after registration
-    const signinRes = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-      callbackUrl,
-    });
-
     setLoading(false);
-    if (signinRes?.error) {
-      router.push("/auth/signin");
-    } else if (signinRes?.url) {
-      router.push(signinRes.url);
+    setVerifyMode(true);
+    setSuccess(data.message || "Account created. Enter the code we sent to your email.");
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setVerifyLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: verificationCode.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Unable to verify email");
+        return;
+      }
+
+      const signinRes = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        callbackUrl,
+      });
+      if (signinRes?.error) {
+        router.push("/auth/signin");
+      } else if (signinRes?.url) {
+        router.push(signinRes.url);
+      } else {
+        router.push("/auth/signin");
+      }
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Unable to resend code");
+        return;
+      }
+      setSuccess(data.message || "Verification code sent.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -120,6 +174,13 @@ export default function SignUpForm() {
             </div>
           )}
 
+          {success && (
+            <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+              {success}
+            </div>
+          )}
+
+          {!verifyMode ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
@@ -167,6 +228,45 @@ export default function SignUpForm() {
               Create Account
             </button>
           </form>
+          ) : (
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={verificationCode}
+                  required
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="6-digit code"
+                  className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-white text-stone-800 text-sm placeholder-stone-300 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+                />
+                <p className="text-xs text-stone-500 mt-1">Sent to {email}</p>
+              </div>
+              <button
+                type="submit"
+                disabled={verifyLoading}
+                className="w-full px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-700 disabled:bg-stone-300 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                {verifyLoading && (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                )}
+                Verify Email
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-sm font-semibold disabled:opacity-60"
+              >
+                {resendLoading ? "Resending..." : "Resend code"}
+              </button>
+            </form>
+          )}
 
           <p className="text-center text-sm text-stone-400">
             Already have an account?{" "}

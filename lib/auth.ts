@@ -13,6 +13,7 @@ interface DBUser {
   password?: string;
   provider?: "credentials" | "google";
   role?:     "customer" | "admin" | "order_manager";
+  emailVerified?: boolean;
   createdAt: string;
 }
 
@@ -33,6 +34,7 @@ export const authOptions: NextAuthOptions = {
           const users = await getCollection<DBUser>("users");
           const user  = await users.findOne({ email: credentials.email.toLowerCase() });
           if (!user?.password) return null;
+          if (user.provider === "credentials" && user.emailVerified === false) return null;
           const valid = await compare(credentials.password, user.password);
           if (!valid) return null;
           return {
