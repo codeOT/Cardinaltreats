@@ -817,6 +817,18 @@ export default function AdminPage(){
   const [teamPassword, setTeamPassword] = useState("");
   const [teamRole, setTeamRole] = useState<"order_manager" | "admin">("order_manager");
   const [teamSaving, setTeamSaving] = useState(false);
+  const [staffUsers, setStaffUsers] = useState<
+    Array<{
+      _id: string;
+      name: string;
+      email: string;
+      role: string;
+      provider: string;
+      emailVerified: boolean;
+      createdAt?: string;
+    }>
+  >([]);
+  const [staffLoading, setStaffLoading] = useState(false);
 
   // Convert a Google-created account into password (credentials) login.
   // After conversion, Google sign-in is blocked by auth guard in `lib/auth.ts`.
@@ -993,6 +1005,16 @@ export default function AdminPage(){
       } finally {
         setCouponsLoading(false);
       }
+      try {
+        setStaffLoading(true);
+        const res = await fetch("/api/admin/users");
+        if (res.ok) {
+          const data = await res.json();
+          setStaffUsers(data.users || []);
+        }
+      } finally {
+        setStaffLoading(false);
+      }
     };
     load().catch(() => {});
   }, []);
@@ -1022,6 +1044,11 @@ export default function AdminPage(){
       setTeamName("");
       setTeamEmail("");
       setTeamPassword("");
+      const listRes = await fetch("/api/admin/users");
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        setStaffUsers(listData.users || []);
+      }
     } catch (err) {
       showToast(err instanceof Error ? `❌ ${err.message}` : "❌ Failed");
     } finally {
@@ -1401,7 +1428,8 @@ export default function AdminPage(){
             )}
 
             {tab === "team" && isFull && (
-              <div className="max-w-lg rounded-2xl bg-white border border-stone-200 p-6 shadow-sm space-y-4">
+              <div className="grid gap-6 xl:grid-cols-2">
+              <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-stone-900">Add staff account</h2>
                 <p className="text-sm text-stone-600">
                   Create a user who can sign in at <strong>/admin/login</strong>.{" "}
@@ -1481,6 +1509,53 @@ export default function AdminPage(){
                     </button>
                   </form>
                 </div>
+              </div>
+              <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-stone-900 mb-4">Staff users</h2>
+                {staffLoading ? (
+                  <p className="text-sm text-stone-500">Loading staff users…</p>
+                ) : staffUsers.length === 0 ? (
+                  <p className="text-sm text-stone-500">No staff users found.</p>
+                ) : (
+                  <div className="space-y-2 max-h-[560px] overflow-y-auto">
+                    {staffUsers.map((u) => (
+                      <div
+                        key={u._id}
+                        className="border border-stone-200 rounded-xl px-3 py-3 flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-stone-900 truncate">{u.name}</p>
+                          <p className="text-xs text-stone-600 truncate">{u.email}</p>
+                          <p className="text-[11px] text-stone-500 mt-1">
+                            {u.role} · {u.provider} · {u.emailVerified ? "verified" : "unverified"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 font-semibold"
+                          onClick={async () => {
+                            const yes = window.confirm(`Delete ${u.email}?`);
+                            if (!yes) return;
+                            const prev = staffUsers;
+                            setStaffUsers((rows) => rows.filter((r) => r._id !== u._id));
+                            try {
+                              const res = await fetch(`/api/admin/users/${u._id}`, { method: "DELETE" });
+                              const data = await res.json().catch(() => ({}));
+                              if (!res.ok) throw new Error(data.error || "Delete failed");
+                              showToast("✅ User deleted");
+                            } catch (err) {
+                              setStaffUsers(prev);
+                              showToast(err instanceof Error ? `❌ ${err.message}` : "❌ Delete failed");
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               </div>
             )}
 

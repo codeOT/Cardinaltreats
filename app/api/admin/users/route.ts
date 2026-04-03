@@ -15,7 +15,33 @@ interface DBUser {
   password?: string;
   provider?: "credentials" | "google";
   role?: string;
+  emailVerified?: boolean;
   createdAt: string;
+}
+
+export async function GET() {
+  const { ok } = await requireFullAdmin();
+  if (!ok) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const users = await getCollection<DBUser>("users");
+  const rows = await users
+    .find({ role: { $in: ["admin", "order_manager"] } as any })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  return NextResponse.json({
+    users: rows.map((u) => ({
+      _id: String((u as any)._id),
+      name: u.name,
+      email: u.email,
+      role: u.role || "customer",
+      provider: u.provider || "credentials",
+      emailVerified: u.emailVerified ?? true,
+      createdAt: u.createdAt,
+    })),
+  });
 }
 
 export async function POST(req: NextRequest) {
