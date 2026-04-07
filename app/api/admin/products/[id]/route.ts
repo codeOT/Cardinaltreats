@@ -40,6 +40,8 @@ export async function PATCH(
     "twBorder",
     "twAccentBg",
     "imageUrl",
+    "price50",
+    "price100",
     "stockQty",
     "stockQty50",
     "stockQty100",

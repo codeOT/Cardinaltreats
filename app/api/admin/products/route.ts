@@ -10,8 +10,8 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  if (!body?.name || !body?.price) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!body?.name || body?.price50 == null || body?.price100 == null) {
+    return NextResponse.json({ error: "Missing fields: name, price50, and price100 are required" }, { status: 400 });
   }
 
   const productsCol = await getCollection<Product>("products");
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     slug,
     name,
     subtitle: String(body.subtitle || ""),
-    price: Number(body.price),
+    price: Number(body.price100 ?? body.price),
     weight: String(body.weight || "250g"),
     badge: String(body.badge || "New"),
     tagline: String(body.tagline || ""),
@@ -41,6 +41,8 @@ export async function POST(req: Request) {
     twBorder: String(body.twBorder || "border-amber-200"),
     twAccentBg: String(body.twAccentBg || "bg-amber-500"),
     imageUrl: body.imageUrl ? String(body.imageUrl) : undefined,
+    price50: body.price50 != null ? Number(body.price50) : undefined,
+    price100: body.price100 != null ? Number(body.price100) : undefined,
     stockQty50: body.stockQty50 != null ? Number(body.stockQty50) : undefined,
     stockQty100: body.stockQty100 != null ? Number(body.stockQty100) : undefined,
     // keep legacy field for older UI/logic

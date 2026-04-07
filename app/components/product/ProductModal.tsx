@@ -14,14 +14,23 @@ interface ProductModalProps {
 
 export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps){
   const [qty, setQty] = useState(1);
-  const basePricePer100 = p.price;
+  const custom50 = Number((p as any).price50);
+  const custom100 = Number((p as any).price100);
+  const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
+  const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+  const basePricePer100 = hasCustom100 ? custom100 : p.price;
   const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? 0;
   const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? 0;
-  const inStock50 = Number(stock50) > 0;
+  const inStock50 = Number(stock50) > 0 && hasCustom50;
   const inStock100 = Number(stock100) > 0;
   const [grams, setGrams] = useState<50 | 100>(inStock100 ? 100 : 50);
   const [stockMsg, setStockMsg] = useState<string | null>(null);
-  const unitPrice = Math.round((basePricePer100 * grams) / 100);
+  const unitPrice =
+    grams === 50
+      ? hasCustom50
+        ? custom50
+        : basePricePer100
+      : basePricePer100;
 
 
   return (
@@ -101,7 +110,7 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
                   className="text-xs font-semibold bg-stone-100 text-stone-700 px-3 py-1.5 rounded-full border border-stone-200"
                 >
                   <option value={100}>100g (default){!inStock100 ? " — Sold out" : ""}</option>
-                  <option value={50}>50g{!inStock50 ? " — Sold out" : ""}</option>
+                  <option value={50}>50g{!inStock50 ? " — Unavailable" : ""}</option>
                 </select>
               </div>
 
@@ -142,6 +151,8 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
                 const productWithSize: Product = {
                   ...p,
                   price: unitPrice,
+                  price50: hasCustom50 ? custom50 : undefined,
+                  price100: basePricePer100,
                   weight: `${grams}g`,
                 };
                 onAddToCart(productWithSize, qty);

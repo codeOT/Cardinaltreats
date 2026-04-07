@@ -19,8 +19,21 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD": {
       const grams = action.selectedGrams ?? 100;
-      const basePricePer100 = (action.product as any).basePricePer100 ?? action.product.price;
-      const unitPrice = Math.round((basePricePer100 * grams) / 100);
+      const custom50 = Number((action.product as any).price50);
+      const custom100 = Number((action.product as any).price100);
+      const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
+      const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+      const basePricePer100 =
+        (action.product as any).basePricePer100 ??
+        (hasCustom100 ? custom100 : action.product.price);
+      const unitPrice =
+        grams === 50
+          ? hasCustom50
+            ? custom50
+            : basePricePer100
+          : hasCustom100
+            ? custom100
+            : basePricePer100;
 
       const stock50 = (action.product as any).stockQty50;
       const stock100 = (action.product as any).stockQty100;
@@ -77,8 +90,20 @@ function cartReducer(state: CartState, action: CartAction): CartState {
               : Number(stock100 ?? stockLegacy ?? 0) > 0;
           if (!available) return i;
 
-          const basePricePer100 = i.basePricePer100 ?? i.price;
-          const unitPrice = Math.round((basePricePer100 * grams) / 100);
+          const custom50 = Number((i as any).price50);
+          const custom100 = Number((i as any).price100);
+          const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
+          const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+          const basePricePer100 =
+            i.basePricePer100 ?? (hasCustom100 ? custom100 : i.price);
+          const unitPrice =
+            grams === 50
+              ? hasCustom50
+                ? custom50
+                : basePricePer100
+              : hasCustom100
+                ? custom100
+                : basePricePer100;
           return {
             ...i,
             selectedGrams: grams,
@@ -124,8 +149,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
           // Basic shape check
           const items: CartItem[] = parsed.map((item) => {
             const grams = item.selectedGrams ?? 100;
-            const basePricePer100 = item.basePricePer100 ?? item.price;
-            const unitPrice = Math.round((basePricePer100 * grams) / 100);
+            const custom50 = Number((item as any).price50);
+            const custom100 = Number((item as any).price100);
+            const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
+            const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+            const basePricePer100 = item.basePricePer100 ?? (hasCustom100 ? custom100 : item.price);
+            const unitPrice =
+              grams === 50
+                ? hasCustom50
+                  ? custom50
+                  : basePricePer100
+                : hasCustom100
+                  ? custom100
+                  : basePricePer100;
             return {
               ...item,
               selectedGrams: grams,

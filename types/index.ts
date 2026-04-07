@@ -22,6 +22,10 @@ export interface Product {
   stockQty50?: number;
   
   stockQty100?: number;
+
+  /** Optional custom pack prices. Falls back to derived/base price when absent. */
+  price50?: number;
+  price100?: number;
 }
 
 export type ProductField = keyof Product;

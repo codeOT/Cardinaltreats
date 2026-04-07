@@ -203,8 +203,10 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                         const next = Number(e.target.value);
                         const stock50 = (item as any).stockQty50 ?? (item as any).stockQty ?? 0;
                         const stock100 = (item as any).stockQty100 ?? (item as any).stockQty ?? 0;
+                        const price50 = Number((item as any).price50);
+                        const hasPrice50 = Number.isFinite(price50) && price50 > 0;
                         const ok =
-                          next === 50 ? Number(stock50) > 0 : Number(stock100) > 0;
+                          next === 50 ? Number(stock50) > 0 && hasPrice50 : Number(stock100) > 0;
                         if (!ok) {
                           setSoldOutMsg((m) => ({
                             ...m,
@@ -221,7 +223,12 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                         100g{Number((item as any).stockQty100 ?? (item as any).stockQty ?? 0) <= 0 ? " — Sold out" : ""}
                       </option>
                       <option value={50}>
-                        50g{Number((item as any).stockQty50 ?? (item as any).stockQty ?? 0) <= 0 ? " — Sold out" : ""}
+                        50g
+                        {Number((item as any).stockQty50 ?? (item as any).stockQty ?? 0) <= 0
+                          ? " — Sold out"
+                          : !(Number.isFinite(Number((item as any).price50)) && Number((item as any).price50) > 0)
+                            ? " — No price"
+                            : ""}
                       </option>
                     </select>
                   </div>

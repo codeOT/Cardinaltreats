@@ -20,6 +20,14 @@ function Ring({ cls = "" }: { cls?: string }){
 }
 
 export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
+  const weightNum = Number(String(p.weight || "").replace(/[^\d]/g, ""));
+  const displayPrice =
+    weightNum === 50
+      ? Number((p as any).price50 ?? p.price)
+      : weightNum === 100
+        ? Number((p as any).price100 ?? p.price)
+        : Number(p.price);
+
   const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? null;
   const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? null;
   const hasAnyStock =
@@ -77,7 +85,7 @@ export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
         <p className="text-stone-400 text-xs leading-relaxed mb-4 flex-1">{p.tagline}</p>
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-bold text-stone-800 text-lg leading-none">{fmt(p.price)}</p>
+            <p className="font-bold text-stone-800 text-lg leading-none">{fmt(displayPrice)}</p>
             <p className="text-stone-400 text-[10px] mt-0.5">{p.weight}</p>
           </div>
           <motion.button

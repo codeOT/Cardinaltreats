@@ -38,6 +38,8 @@ interface EditFormState {
   name: string;
   subtitle: string;
   price: string;
+  price50: string;
+  price100: string;
   weight: string;
   badge: string;
   tagline: string;
@@ -58,6 +60,8 @@ const DEFAULT_NEW_PRODUCT: EditFormState = {
   name: "",
   subtitle: "",
   price: "",
+  price50: "",
+  price100: "",
   weight: "100g",
   badge: "New",
   tagline: "",
@@ -81,6 +85,8 @@ function productToForm(p: Product): EditFormState {
     name: p.name,
     subtitle: p.subtitle,
     price: String(p.price),
+    price50: (p as any).price50 != null ? String((p as any).price50) : "",
+    price100: (p as any).price100 != null ? String((p as any).price100) : String(p.price),
     weight: p.weight,
     badge: p.badge,
     tagline: p.tagline,
@@ -230,6 +236,14 @@ function AdminProductCard({
   onEdit: () => void;
   onDelete: () => void;
 }){
+  const weightNum = Number(String(product.weight || "").replace(/[^\d]/g, ""));
+  const displayPrice =
+    weightNum === 50
+      ? Number((product as any).price50 ?? product.price)
+      : weightNum === 100
+        ? Number((product as any).price100 ?? product.price)
+        : Number(product.price);
+
   const [confirmDelete, setConfirmDelete] = useState(false);
   const stock50 = (product as any).stockQty50 ?? (product as any).stockQty ?? null;
   const stock100 = (product as any).stockQty100 ?? (product as any).stockQty ?? null;
@@ -305,7 +319,7 @@ function AdminProductCard({
           </span>
         </div>
         <p className="text-xs text-gray-500 line-clamp-2 mb-2">{product.description}</p>
-        <p className="text-sm font-semibold text-gray-900">{fmt(product.price)}</p>
+        <p className="text-sm font-semibold text-gray-900">{fmt(displayPrice)}</p>
       </div>
     </div>
   );
@@ -400,12 +414,19 @@ function ProductFormPanel({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Price (₦)</Label>
-            <Input value={form.price} onChange={set("price")} placeholder="4500" type="number" />
-          </div>
-          <div>
             <Label>Weight</Label>
             <Input value={form.weight} onChange={set("weight")} placeholder="250g" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Price 50g (₦)</Label>
+            <Input value={form.price50} onChange={set("price50")} placeholder="2250" type="number" />
+          </div>
+          <div>
+            <Label>Price 100g (₦)</Label>
+            <Input value={form.price100} onChange={set("price100")} placeholder="4500" type="number" />
           </div>
         </div>
 
@@ -893,11 +914,20 @@ export default function AdminPage(){
       const stockQty50 = Number(form.stockQty50 || 0);
       const stockQty100 = Number(form.stockQty100 || 0);
       const stockQty = stockQty50 + stockQty100;
+      const price100 = Number(form.price100 || 0);
+      const price50 = Number(form.price50 || 0);
+      if (!Number.isFinite(price50) || price50 <= 0 || !Number.isFinite(price100) || price100 <= 0) {
+        showToast("❌ Enter valid prices for both 50g and 100g.");
+        setSaving(false);
+        return;
+      }
 
       const patch: Partial<Product> = {
         name: form.name.trim(),
         subtitle: form.subtitle.trim(),
-        price: Number(form.price),
+        price: price100,
+        price50,
+        price100,
         weight: form.weight.trim(),
         badge: form.badge.trim(),
         tagline: form.tagline.trim(),
@@ -934,6 +964,8 @@ export default function AdminPage(){
           twBorder: patch.twBorder!,
           twAccentBg: patch.twAccentBg!,
           imageUrl: patch.imageUrl,
+          price50: (patch as any).price50,
+          price100: (patch as any).price100,
           stockQty: patch.stockQty ?? 0,
           stockQty50: (patch as any).stockQty50 ?? 0,
           stockQty100: (patch as any).stockQty100 ?? 0,
