@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getCollection } from "@/lib/db";
 import { requireOrdersStaff } from "@/lib/admin";
+import { sendStatusUpdate } from "@/lib/email";
+import type { DBOrder } from "@/lib/orders";
 import type { Order, OrderStatus } from "@/types";
 
 export async function PATCH(
@@ -28,6 +30,21 @@ export async function PATCH(
   );
 
   const order = await ordersCol.findOne({ _id: new ObjectId(id) as any });
-  return NextResponse.json({ order: { ...order, _id: String((order as any)?._id) } });
+  const orderForJson = order
+    ? { ...order, _id: String((order as any)?._id) }
+    : null;
+
+  if (order?.userEmail) {
+    try {
+      await sendStatusUpdate({
+        ...(order as unknown as DBOrder),
+        status,
+      });
+    } catch (err) {
+      console.error("[admin/orders PATCH] status email failed:", err);
+    }
+  }
+
+  return NextResponse.json({ order: orderForJson });
 }
 

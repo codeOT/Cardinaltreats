@@ -184,6 +184,7 @@ export async function sendStatusUpdate(order: DBOrder): Promise<void> {
     processing: "Your order is being carefully packed.",
     shipped:    "Great news — your order is on its way!",
     delivered:  "Your order has been delivered. Enjoy your cashews!",
+    cancelled:  "Your order has been cancelled. If you have questions, please contact support.",
   };
 
   const msg         = statusMessages[order.status] ?? "Your order status has been updated.";
@@ -217,7 +218,7 @@ export async function sendStatusUpdate(order: DBOrder): Promise<void> {
     </tr>
     <tr>
       <td style="background:#fafaf9;padding:20px 40px;text-align:center;border-top:1.5px solid #f1f0ef;">
-        <p style="margin:0;color:#a8a29e;font-size:12px;">© 2025 Cardinal Treats · Lagos, NG</p>
+        <p style="margin:0;color:#a8a29e;font-size:12px;">© 2026 Cardinal Treats · Lagos, NG</p>
       </td>
     </tr>
   </table>
