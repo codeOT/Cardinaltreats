@@ -18,20 +18,29 @@ type CartAction =
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD": {
-      const grams = action.selectedGrams ?? 100;
+      const inferredFromWeight = Number(
+        String((action.product as any).weight || "").replace(/[^\d]/g, "")
+      );
+      const grams =
+        action.selectedGrams ??
+        ((action.product as any).selectedGrams as number | undefined) ??
+        (inferredFromWeight === 50 || inferredFromWeight === 100 ? inferredFromWeight : 100);
       const custom50 = Number((action.product as any).price50);
       const custom100 = Number((action.product as any).price100);
       const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
       const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+      const weightNum = Number(String(action.product.weight || "").replace(/[^\d]/g, ""));
+      const hasPrice50 = hasCustom50 || (weightNum === 50 && Number(action.product.price) > 0);
+      const hasPrice100 = hasCustom100 || (weightNum === 100 && Number(action.product.price) > 0);
       const basePricePer100 =
         (action.product as any).basePricePer100 ??
-        (hasCustom100 ? custom100 : action.product.price);
+        (hasCustom100 ? custom100 : hasPrice100 ? action.product.price : action.product.price);
       const unitPrice =
         grams === 50
-          ? hasCustom50
+          ? hasPrice50
             ? custom50
-            : basePricePer100
-          : hasCustom100
+            : action.product.price
+          : hasPrice100
             ? custom100
             : basePricePer100;
 
@@ -94,14 +103,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           const custom100 = Number((i as any).price100);
           const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
           const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+          const weightNum = Number(String(i.weight || "").replace(/[^\d]/g, ""));
+          const hasPrice50 = hasCustom50 || (weightNum === 50 && Number(i.price) > 0);
+          const hasPrice100 = hasCustom100 || (weightNum === 100 && Number(i.price) > 0);
           const basePricePer100 =
             i.basePricePer100 ?? (hasCustom100 ? custom100 : i.price);
           const unitPrice =
             grams === 50
-              ? hasCustom50
+              ? hasPrice50
                 ? custom50
-                : basePricePer100
-              : hasCustom100
+                : i.price
+              : hasPrice100
                 ? custom100
                 : basePricePer100;
           return {
@@ -153,13 +165,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const custom100 = Number((item as any).price100);
             const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
             const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+            const weightNum = Number(String(item.weight || "").replace(/[^\d]/g, ""));
+            const hasPrice50 = hasCustom50 || (weightNum === 50 && Number(item.price) > 0);
+            const hasPrice100 = hasCustom100 || (weightNum === 100 && Number(item.price) > 0);
             const basePricePer100 = item.basePricePer100 ?? (hasCustom100 ? custom100 : item.price);
             const unitPrice =
               grams === 50
-                ? hasCustom50
+                ? hasPrice50
                   ? custom50
-                  : basePricePer100
-                : hasCustom100
+                  : item.price
+                : hasPrice100
                   ? custom100
                   : basePricePer100;
             return {

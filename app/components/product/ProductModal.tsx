@@ -18,19 +18,24 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
   const custom100 = Number((p as any).price100);
   const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
   const hasCustom100 = Number.isFinite(custom100) && custom100 > 0;
+  const weightNum = Number(String(p.weight || "").replace(/[^\d]/g, ""));
+  const hasPrice50 = hasCustom50 || (weightNum === 50 && Number(p.price) > 0);
+  const hasPrice100 = hasCustom100 || (weightNum === 100 && Number(p.price) > 0);
   const basePricePer100 = hasCustom100 ? custom100 : p.price;
   const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? 0;
   const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? 0;
-  const inStock50 = Number(stock50) > 0 && hasCustom50;
+  const inStock50 = Number(stock50) > 0 && hasPrice50;
   const inStock100 = Number(stock100) > 0;
   const [grams, setGrams] = useState<50 | 100>(inStock100 ? 100 : 50);
   const [stockMsg, setStockMsg] = useState<string | null>(null);
   const unitPrice =
     grams === 50
-      ? hasCustom50
+      ? hasPrice50
         ? custom50
-        : basePricePer100
-      : basePricePer100;
+        : p.price
+      : hasPrice100
+        ? basePricePer100
+        : p.price;
 
 
   return (
@@ -151,8 +156,8 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
                 const productWithSize: Product = {
                   ...p,
                   price: unitPrice,
-                  price50: hasCustom50 ? custom50 : undefined,
-                  price100: basePricePer100,
+                  price50: hasCustom50 ? custom50 : weightNum === 50 ? p.price : undefined,
+                  price100: hasCustom100 ? basePricePer100 : weightNum === 100 ? p.price : undefined,
                   weight: `${grams}g`,
                 };
                 onAddToCart(productWithSize, qty);

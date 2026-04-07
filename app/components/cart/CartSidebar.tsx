@@ -204,7 +204,10 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                         const stock50 = (item as any).stockQty50 ?? (item as any).stockQty ?? 0;
                         const stock100 = (item as any).stockQty100 ?? (item as any).stockQty ?? 0;
                         const price50 = Number((item as any).price50);
-                        const hasPrice50 = Number.isFinite(price50) && price50 > 0;
+                        const weightNum = Number(String(item.weight || "").replace(/[^\d]/g, ""));
+                        const hasPrice50 =
+                          (Number.isFinite(price50) && price50 > 0) ||
+                          (weightNum === 50 && Number(item.price) > 0);
                         const ok =
                           next === 50 ? Number(stock50) > 0 && hasPrice50 : Number(stock100) > 0;
                         if (!ok) {
@@ -226,7 +229,10 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                         50g
                         {Number((item as any).stockQty50 ?? (item as any).stockQty ?? 0) <= 0
                           ? " — Sold out"
-                          : !(Number.isFinite(Number((item as any).price50)) && Number((item as any).price50) > 0)
+                          : !(
+                              (Number.isFinite(Number((item as any).price50)) && Number((item as any).price50) > 0) ||
+                              (Number(String(item.weight || "").replace(/[^\d]/g, "")) === 50 && Number(item.price) > 0)
+                            )
                             ? " — No price"
                             : ""}
                       </option>
