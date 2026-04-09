@@ -34,7 +34,7 @@ export default function HomePage() {
     setModal(null);
   };
 
-  const whatsappNumber = "+234";
+  const whatsappNumber = "+2349040244449";
   const whatsappMessage = "Hi! I need support with my order on Cardinal Treats.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 

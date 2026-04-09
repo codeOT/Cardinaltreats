@@ -1371,7 +1371,7 @@ export default function AdminPage(){
                       <Link href="/auth/forgot-password" className="underline font-semibold">
                         forgot password
                       </Link>{" "}
-                      (same flow as the main store).
+                      .
                     </li>
                   </ul>
                 </div>

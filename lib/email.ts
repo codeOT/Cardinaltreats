@@ -134,7 +134,7 @@ export async function sendOrderConfirmation(order: DBOrder): Promise<{
 
             <p style="margin:0;color:#78716c;font-size:13px;line-height:1.6;">
               Questions? Contact us at
-              <a href="mailto:hello@cardinaltreats.com" style="color:#F59E0B;">
+              <a href="mailto:sales@cardinaltorch.com" style="color:#F59E0B;">
                 sales@cardinaltorch.com 
               </a>
             </p>
