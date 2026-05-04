@@ -6,7 +6,7 @@ interface DeliveryBannerProps {
 }
 
 export function DeliveryBanner({ onShopClick }: DeliveryBannerProps){
-  const whatsappNumber = "+234"; // Replace with your actual WhatsApp number
+  const whatsappNumber = "+2349040244449"; 
   const whatsappMessage = "Hi! I'd like to know more about Cardinal Treats cashews.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 

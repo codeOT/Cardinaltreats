@@ -148,14 +148,33 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
               </p>
             </div>
           ) : (
-            items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 py-4 border-b border-stone-100 last:border-0"
-              >
+            items.map((item) => {
+              const isCarton =
+                (item as any).packType === "carton" ||
+                String(item.weight || "").toLowerCase().includes("pack");
+              const stock50 = Number((item as any).stockQty50 ?? 0);
+              const stock100 = Number((item as any).stockQty100 ?? 0);
+              const stockLegacy = Number((item as any).stockQty ?? 0);
+              const inferredWeight = Number(String(item.weight || "").replace(/[^\d]/g, ""));
+              const selectedGrams = item.selectedGrams ?? (inferredWeight === 50 ? 50 : 100);
+              const selectedInStock = isCarton
+                ? stockLegacy > 0
+                : selectedGrams === 50
+                  ? stock50 > 0
+                  : stock100 > 0;
+              const custom50 = Number((item as any).price50);
+              const hasPrice50 =
+                (Number.isFinite(custom50) && custom50 > 0) ||
+                (inferredWeight === 50 && Number(item.price) > 0);
+
+              return (
                 <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${item.twBg} border ${item.twBorder}`}
+                  key={item.id}
+                  className="flex items-center gap-3 py-4 border-b border-stone-100 last:border-0"
                 >
+                  <div
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${item.twBg} border ${item.twBorder}`}
+                  >
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
@@ -171,7 +190,7 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-stone-800 text-sm truncate">{item.name}</p>
                   <p className="text-stone-400 text-xs">
-                    {item.selectedGrams ?? 100}g
+                    {isCarton ? item.weight : `${selectedGrams}g`}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <button
@@ -184,7 +203,7 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                     <span className="text-sm font-bold w-4 text-center text-stone-800">{item.qty}</span>
                     <button
                       onClick={() => updateQty(item.id, 1)}
-                      disabled={isCheckingOut}
+                      disabled={isCheckingOut || !selectedInStock}
                       className="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <IcPlus />
@@ -196,48 +215,43 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                     >
                       Remove
                     </button>
-                    <select
-                      value={item.selectedGrams ?? 100}
-                      disabled={isCheckingOut}
-                      onChange={(e) => {
-                        const next = Number(e.target.value);
-                        const stock50 = (item as any).stockQty50 ?? (item as any).stockQty ?? 0;
-                        const stock100 = (item as any).stockQty100 ?? (item as any).stockQty ?? 0;
-                        const price50 = Number((item as any).price50);
-                        const weightNum = Number(String(item.weight || "").replace(/[^\d]/g, ""));
-                        const hasPrice50 =
-                          (Number.isFinite(price50) && price50 > 0) ||
-                          (weightNum === 50 && Number(item.price) > 0);
-                        const ok =
-                          next === 50 ? Number(stock50) > 0 && hasPrice50 : Number(stock100) > 0;
-                        if (!ok) {
-                          setSoldOutMsg((m) => ({
-                            ...m,
-                            [item.id]: `${next}g is sold out for this item.`,
-                          }));
-                          return;
-                        }
-                        setSoldOutMsg((m) => ({ ...m, [item.id]: null }));
-                        setItemWeight(item.id, next);
-                      }}
-                      className="ml-2 text-[11px] font-semibold bg-stone-100 text-stone-700 px-2 py-1 rounded-full border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value={100}>
-                        100g{Number((item as any).stockQty100 ?? (item as any).stockQty ?? 0) <= 0 ? " — Sold out" : ""}
-                      </option>
-                      <option value={50}>
-                        50g
-                        {Number((item as any).stockQty50 ?? (item as any).stockQty ?? 0) <= 0
-                          ? " — Sold out"
-                          : !(
-                              (Number.isFinite(Number((item as any).price50)) && Number((item as any).price50) > 0) ||
-                              (Number(String(item.weight || "").replace(/[^\d]/g, "")) === 50 && Number(item.price) > 0)
-                            )
-                            ? " — No price"
-                            : ""}
-                      </option>
-                    </select>
+                    {!isCarton && (
+                      <select
+                        value={selectedGrams}
+                        disabled={isCheckingOut}
+                        onChange={(e) => {
+                          const next = Number(e.target.value);
+                          const ok =
+                            next === 50 ? stock50 > 0 && hasPrice50 : stock100 > 0;
+                          if (!ok) {
+                            setSoldOutMsg((m) => ({
+                              ...m,
+                              [item.id]: `${next}g is sold out for this item.`,
+                            }));
+                            return;
+                          }
+                          setSoldOutMsg((m) => ({ ...m, [item.id]: null }));
+                          setItemWeight(item.id, next);
+                        }}
+                        className="ml-2 text-[11px] font-semibold bg-stone-100 text-stone-700 px-2 py-1 rounded-full border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value={100}>
+                          100g{stock100 <= 0 ? " — Sold out" : ""}
+                        </option>
+                        <option value={50}>
+                          50g
+                          {stock50 <= 0
+                            ? " — Sold out"
+                            : !hasPrice50
+                              ? " — No price"
+                              : ""}
+                        </option>
+                      </select>
+                    )}
                   </div>
+                  {!selectedInStock && (
+                    <p className="mt-1 text-[11px] text-rose-600">This item is sold out.</p>
+                  )}
                   {soldOutMsg[item.id] && (
                     <p className="mt-1 text-[11px] text-rose-600">{soldOutMsg[item.id]}</p>
                   )}
@@ -246,7 +260,8 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
                   {fmt(item.price * item.qty)}
                 </p>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

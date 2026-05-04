@@ -14,6 +14,8 @@ interface ProductModalProps {
 
 export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps){
   const [qty, setQty] = useState(1);
+  const isCarton =
+    (p as any).packType === "carton" || String(p.weight || "").toLowerCase().includes("pack");
   const custom50 = Number((p as any).price50);
   const custom100 = Number((p as any).price100);
   const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
@@ -22,10 +24,20 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
   const hasPrice50 = hasCustom50 || (weightNum === 50 && Number(p.price) > 0);
   const hasPrice100 = hasCustom100 || (weightNum === 100 && Number(p.price) > 0);
   const basePricePer100 = hasCustom100 ? custom100 : p.price;
-  const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? 0;
-  const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? 0;
-  const inStock50 = Number(stock50) > 0 && hasPrice50;
-  const inStock100 = Number(stock100) > 0;
+  const rawStock50 = (p as any).stockQty50;
+  const rawStock100 = (p as any).stockQty100;
+  const rawLegacyStock = (p as any).stockQty;
+  const has50Field = rawStock50 != null;
+  const has100Field = rawStock100 != null;
+  const stock50 = has50Field ? rawStock50 : rawLegacyStock;
+  const stock100 = has100Field ? rawStock100 : rawLegacyStock;
+  const inStock50 = (stock50 == null ? true : Number(stock50) > 0) && hasPrice50;
+  const inStock100 = stock100 == null ? true : Number(stock100) > 0;
+  const hasAnyStock = isCarton
+    ? rawLegacyStock == null
+      ? true
+      : Number(rawLegacyStock) > 0
+    : inStock50 || inStock100;
   const [grams, setGrams] = useState<50 | 100>(inStock100 ? 100 : 50);
   const [stockMsg, setStockMsg] = useState<string | null>(null);
   const unitPrice =
@@ -95,29 +107,31 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
                 </span>
               ))}
             </div>
-            <div className="flex items-center gap-2 mb-6">
-                <span className="text-sm font-semibold text-stone-700">Size</span>
-                <select
-                  value={grams}
-                  onChange={(e) => {
-                    const next = Number(e.target.value) as 50 | 100;
-                    setStockMsg(null);
-                    if (next === 50 && !inStock50) {
-                      setStockMsg("50g is sold out for this item. Please choose 100g.");
-                      return;
-                    }
-                    if (next === 100 && !inStock100) {
-                      setStockMsg("100g is sold out for this item. Please choose 50g.");
-                      return;
-                    }
-                    setGrams(next);
-                  }}
-                  className="text-xs font-semibold bg-stone-100 text-stone-700 px-3 py-1.5 rounded-full border border-stone-200"
-                >
-                  <option value={100}>100g (default){!inStock100 ? " — Sold out" : ""}</option>
-                  <option value={50}>50g{!inStock50 ? " — Unavailable" : ""}</option>
-                </select>
-              </div>
+            {!isCarton && (
+              <div className="flex items-center gap-2 mb-6">
+                  <span className="text-sm font-semibold text-stone-700">Size</span>
+                  <select
+                    value={grams}
+                    onChange={(e) => {
+                      const next = Number(e.target.value) as 50 | 100;
+                      setStockMsg(null);
+                      if (next === 50 && !inStock50) {
+                        setStockMsg("50g is sold out for this item. Please choose 100g.");
+                        return;
+                      }
+                      if (next === 100 && !inStock100) {
+                        setStockMsg("100g is sold out for this item. Please choose 50g.");
+                        return;
+                      }
+                      setGrams(next);
+                    }}
+                    className="text-xs font-semibold bg-stone-100 text-stone-700 px-3 py-1.5 rounded-full border border-stone-200"
+                  >
+                    <option value={100}>100g (default){!inStock100 ? " — Sold out" : ""}</option>
+                    <option value={50}>50g{!inStock50 ? " — Unavailable" : ""}</option>
+                  </select>
+                </div>
+            )}
 
             <div className="flex items-center gap-3 mb-6">
               <span className="text-sm font-semibold text-stone-700">Qty</span>
@@ -149,7 +163,7 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
 
             <button
               onClick={() => {
-                if ((grams === 100 && !inStock100) || (grams === 50 && !inStock50)) {
+                if (!isCarton && ((grams === 100 && !inStock100) || (grams === 50 && !inStock50))) {
                   setStockMsg(`${grams}g is currently out of stock.`);
                   return;
                 }
@@ -158,13 +172,16 @@ export function ProductModal({ product: p, onClose, onAddToCart }: ProductModalP
                   price: unitPrice,
                   price50: hasCustom50 ? custom50 : weightNum === 50 ? p.price : undefined,
                   price100: hasCustom100 ? basePricePer100 : weightNum === 100 ? p.price : undefined,
-                  weight: `${grams}g`,
+                  weight: isCarton ? p.weight : `${grams}g`,
                 };
                 onAddToCart(productWithSize, qty);
               }}
-              className="w-full bg-stone-900 hover:bg-stone-700 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm shadow-md transition-all"
+              disabled={!hasAnyStock}
+              className={`w-full text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm shadow-md transition-all ${
+                hasAnyStock ? "bg-stone-900 hover:bg-stone-700" : "bg-stone-300 cursor-not-allowed"
+              }`}
             >
-              <IcCart /> Add to Cart — {fmt(unitPrice * qty)}
+              <IcCart /> {hasAnyStock ? `Add to Cart — ${fmt(unitPrice * qty)}` : "Out of stock"}
             </button>
           </div>
         </div>

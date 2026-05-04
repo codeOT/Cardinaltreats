@@ -38,6 +38,18 @@ export async function POST(req: NextRequest) {
 
   const ordersCol = await getCollection<DBOrder>("orders");
   const existing = await ordersCol.findOne({ paystackReference: reference } as any);
+  const now = new Date().toISOString();
+  await ordersCol.updateOne(
+    { paystackReference: reference } as any,
+    {
+      $set: {
+        status: "processing",
+        updatedAt: now,
+        paidAt: (existing as any)?.paidAt || now,
+      },
+    } as any
+  );
+
   const alreadySent = Boolean((existing as any)?.emailSentAt);
 
   if (alreadySent) {
@@ -53,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const info = await sendOrderConfirmation(order as any);
+    const info = await sendOrderConfirmation({ ...order, status: "processing" } as any);
     await ordersCol.updateOne(
       { paystackReference: reference } as any,
       {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import { requireOrdersStaff } from "@/lib/admin";
 import type { DeliveryAddress, Order } from "@/types";
+import { ADMIN_VISIBLE_ORDER_STATUSES } from "@/lib/orders";
 
 export async function GET() {
   const { ok } = await requireOrdersStaff();
@@ -10,7 +11,10 @@ export async function GET() {
   }
 
   const ordersCol = await getCollection<Order>("orders");
-  const orders = await ordersCol.find({}).sort({ createdAt: -1 }).toArray();
+  const orders = await ordersCol
+    .find({ status: { $in: ADMIN_VISIBLE_ORDER_STATUSES } } as any)
+    .sort({ createdAt: -1 })
+    .toArray();
 
   // Hydrate missing deliveryAddress from addresses collection (for older orders).
   const addressesCol = await getCollection<DeliveryAddress>("addresses");

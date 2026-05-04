@@ -43,13 +43,15 @@ export function Navbar({ onCartOpen }: NavbarProps) {
 
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-8 ">
-          {(["Shop", "Contact"] as const).map((l) => (
+          {(["Shop", "Contact", "Be a Distributor"] as const).map((l) => (
             <button
               key={l}
               onClick={() =>
                 l === "Shop"
                   ? scrollTo("shop")
-                  : (window.location.href = "/contact")
+                  : l === "Contact"
+                    ? (window.location.href = "/contact")
+                    : (window.location.href = "/be-a-distributor")
               }
               className={`relative text-sm font-medium transition-colors cursor-pointer ${
                 scrolled
@@ -162,6 +164,13 @@ export function Navbar({ onCartOpen }: NavbarProps) {
             className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-100"
           >
             Contact
+          </Link>
+          <Link
+            href="/be-a-distributor"
+            onClick={() => setMobileOpen(false)}
+            className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-100"
+          >
+            Be a Distributor
           </Link>
 
           {status === "authenticated" ? (

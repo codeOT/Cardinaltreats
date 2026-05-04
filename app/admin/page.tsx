@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useProducts } from "@/./context/Productscontext";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/app/components/ui/Toast";
@@ -35,6 +35,7 @@ const IcDownload = () => <svg width="16" height="16" fill="none" stroke="current
 
 // Types
 interface EditFormState {
+  packType: "pouch" | "carton";
   name: string;
   subtitle: string;
   price: string;
@@ -57,6 +58,7 @@ interface EditFormState {
 }
 
 const DEFAULT_NEW_PRODUCT: EditFormState = {
+  packType: "pouch",
   name: "",
   subtitle: "",
   price: "",
@@ -79,9 +81,35 @@ const DEFAULT_NEW_PRODUCT: EditFormState = {
 };
 
 function productToForm(p: Product): EditFormState {
-  const s50 = (p as any).stockQty50 ?? (p as any).stockQty ?? 100;
-  const s100 = (p as any).stockQty100 ?? (p as any).stockQty ?? 100;
+  const isCarton =
+    (p as any).packType === "carton" || String(p.weight || "").toLowerCase().includes("pack");
+  const weightNum = Number(String(p.weight || "").replace(/[^\d]/g, ""));
+  const legacyStock = Number((p as any).stockQty ?? 0);
+  const s50 =
+    isCarton
+      ? weightNum === 50
+        ? legacyStock
+        : 0
+      : (p as any).stockQty50 != null
+        ? Number((p as any).stockQty50)
+        : weightNum === 50
+          ? legacyStock
+          : 0;
+  const s100 =
+    isCarton
+      ? weightNum === 100
+        ? legacyStock
+        : 0
+      : (p as any).stockQty100 != null
+        ? Number((p as any).stockQty100)
+        : weightNum === 100
+          ? legacyStock
+          : 0;
   return {
+    packType:
+      isCarton
+        ? "carton"
+        : "pouch",
     name: p.name,
     subtitle: p.subtitle,
     price: String(p.price),
@@ -245,12 +273,16 @@ function AdminProductCard({
         : Number(product.price);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const isCarton =
+    (product as any).packType === "carton" || String(product.weight || "").toLowerCase().includes("pack");
   const stock50 = (product as any).stockQty50 ?? (product as any).stockQty ?? null;
   const stock100 = (product as any).stockQty100 ?? (product as any).stockQty ?? null;
   const hasAnyStock =
-    stock50 == null && stock100 == null
+    isCarton
       ? Number((product as any).stockQty ?? 0) > 0
-      : Number(stock50 ?? 0) > 0 || Number(stock100 ?? 0) > 0;
+      : stock50 == null && stock100 == null
+        ? Number((product as any).stockQty ?? 0) > 0
+        : Number(stock50 ?? 0) > 0 || Number(stock100 ?? 0) > 0;
 
   return (
     <div className="rounded-lg border border-gray-200 overflow-hidden hover:border-gray-300 transition-colors group bg-white">
@@ -342,6 +374,14 @@ function ProductFormPanel({
 }){
   const set = (key: keyof EditFormState) => (val: string) =>
     setForm((f) => ({ ...f, [key]: val }));
+  const activePackType: "pouch" | "carton" = form.packType === "carton" ? "carton" : "pouch";
+  const activeWeight: "50g" | "100g" = String(form.weight).trim() === "50g" ? "50g" : "100g";
+  const activePriceValue =
+    activePackType === "carton"
+      ? form.price100
+      : activeWeight === "50g"
+        ? form.price50
+        : form.price100;
 
   const applyTheme = (theme: typeof COLOUR_THEMES[0]) => {
     setForm((f) => ({
@@ -414,21 +454,89 @@ function ProductFormPanel({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <Label>Pack Type</Label>
+            <select
+              value={activePackType}
+              onChange={(e) => {
+                const next = e.target.value === "carton" ? "carton" : "pouch";
+                setForm((f) => ({
+                  ...f,
+                  packType: next,
+                  weight: "100g",
+                }));
+              }}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-medium outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+            >
+              <option value="pouch">Pouch</option>
+              <option value="carton">Carton</option>
+            </select>
+          </div>
+          <div>
             <Label>Weight</Label>
-            <Input value={form.weight} onChange={set("weight")} placeholder="250g" />
+            <select
+              value={activeWeight}
+              onChange={(e) => set("weight")(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm font-medium outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+            >
+              <option value="100g">100g</option>
+              <option value="50g">50g</option>
+            </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Price 50g (₦)</Label>
-            <Input value={form.price50} onChange={set("price50")} placeholder="2250" type="number" />
+        {activePackType === "carton" ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Carton Price ({activeWeight}) (₦)</Label>
+              <Input
+                value={activeWeight === "50g" ? form.price50 : form.price100}
+                onChange={(v) => (activeWeight === "50g" ? set("price50")(v) : set("price100")(v))}
+                placeholder={activeWeight === "50g" ? "27000" : "54000"}
+                type="number"
+              />
+            </div>
+            <div>
+              <Label>Carton Stock Qty ({activeWeight})</Label>
+              <Input
+                value={activeWeight === "50g" ? form.stockQty50 : form.stockQty100}
+                onChange={(v) => (activeWeight === "50g" ? set("stockQty50")(v) : set("stockQty100")(v))}
+                placeholder="0"
+                type="number"
+              />
+              <p className={`mt-1 text-xs font-semibold ${(activeWeight === "50g" ? Number(form.stockQty50 || 0) : Number(form.stockQty100 || 0)) > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                {(activeWeight === "50g" ? Number(form.stockQty50 || 0) : Number(form.stockQty100 || 0)) > 0 ? "Carton: In stock" : "Carton: Sold out"}
+              </p>
+            </div>
           </div>
-          <div>
-            <Label>Price 100g (₦)</Label>
-            <Input value={form.price100} onChange={set("price100")} placeholder="4500" type="number" />
+        ) : activeWeight === "50g" ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Price 50g (₦)</Label>
+              <Input value={form.price50} onChange={set("price50")} placeholder="2250" type="number" />
+            </div>
+            <div>
+              <Label>Stock Qty (50g)</Label>
+              <Input value={form.stockQty50} onChange={set("stockQty50")} placeholder="0" type="number" />
+              <p className={`mt-1 text-xs font-semibold ${Number(form.stockQty50 || 0) > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                {Number(form.stockQty50 || 0) > 0 ? "50g: In stock" : "50g: Sold out"}
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Price 100g (₦)</Label>
+              <Input value={form.price100} onChange={set("price100")} placeholder="4500" type="number" />
+            </div>
+            <div>
+              <Label>Stock Qty (100g)</Label>
+              <Input value={form.stockQty100} onChange={set("stockQty100")} placeholder="0" type="number" />
+              <p className={`mt-1 text-xs font-semibold ${Number(form.stockQty100 || 0) > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                {Number(form.stockQty100 || 0) > 0 ? "100g: In stock" : "100g: Sold out"}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -462,22 +570,6 @@ function ProductFormPanel({
           <p className="text-xs text-gray-500 mt-1">Comma-separated</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Stock Qty (50g)</Label>
-            <Input value={form.stockQty50} onChange={set("stockQty50")} placeholder="0" type="number" />
-            <p className={`mt-1 text-xs font-semibold ${Number(form.stockQty50 || 0) > 0 ? "text-emerald-700" : "text-rose-700"}`}>
-              {Number(form.stockQty50 || 0) > 0 ? "50g: In stock" : "50g: Sold out"}
-            </p>
-          </div>
-          <div>
-            <Label>Stock Qty (100g)</Label>
-            <Input value={form.stockQty100} onChange={set("stockQty100")} placeholder="0" type="number" />
-            <p className={`mt-1 text-xs font-semibold ${Number(form.stockQty100 || 0) > 0 ? "text-emerald-700" : "text-rose-700"}`}>
-              {Number(form.stockQty100 || 0) > 0 ? "100g: In stock" : "100g: Sold out"}
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Save / cancel footer */}
@@ -490,7 +582,7 @@ function ProductFormPanel({
         </button>
         <button
           onClick={onSave}
-          disabled={saving || !form.name.trim() || !form.price}
+          disabled={saving || !form.name.trim() || !activePriceValue}
           className="flex-1 px-4 py-3 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
         >
           {saving ? (
@@ -886,10 +978,24 @@ export default function AdminPage(){
   const [newCouponCode, setNewCouponCode] = useState("");
   const [newCouponPercent, setNewCouponPercent] = useState("");
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [products, searchQuery]
   );
+  const sortedFilteredProducts = useMemo(
+    () =>
+      [...filteredProducts].sort(
+        (a, b) => Number(a.sortOrder ?? a.id) - Number(b.sortOrder ?? b.id)
+      ),
+    [filteredProducts]
+  );
+  const [draggingProductId, setDraggingProductId] = useState<number | null>(null);
+  const [dragOverProductId, setDragOverProductId] = useState<number | null>(null);
+  const [reorderingProducts, setReorderingProducts] = useState(false);
 
   const openEdit = (p: Product) => {
     setForm(productToForm(p));
@@ -908,27 +1014,85 @@ export default function AdminPage(){
     setAddingNew(false);
   };
 
+  const handleReorderDrop = async (targetId: number) => {
+    if (draggingProductId == null || draggingProductId === targetId || reorderingProducts) {
+      setDraggingProductId(null);
+      setDragOverProductId(null);
+      return;
+    }
+    if (searchQuery.trim()) {
+      showToast("⚠️ Clear search before reordering.");
+      setDraggingProductId(null);
+      setDragOverProductId(null);
+      return;
+    }
+
+    const fromIndex = sortedFilteredProducts.findIndex((p) => p.id === draggingProductId);
+    const toIndex = sortedFilteredProducts.findIndex((p) => p.id === targetId);
+    if (fromIndex < 0 || toIndex < 0) {
+      setDraggingProductId(null);
+      setDragOverProductId(null);
+      return;
+    }
+
+    const reordered = [...sortedFilteredProducts];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    setReorderingProducts(true);
+    try {
+      await Promise.all(
+        reordered.map((product, index) =>
+          updateProduct(product.id, { sortOrder: index + 1 } as Partial<Product>)
+        )
+      );
+      showToast("✅ Product order updated");
+    } catch {
+      showToast("❌ Failed to reorder products");
+    } finally {
+      setReorderingProducts(false);
+      setDraggingProductId(null);
+      setDragOverProductId(null);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      const activePackType: "pouch" | "carton" = form.packType === "carton" ? "carton" : "pouch";
+      const activeWeight: "50g" | "100g" = String(form.weight).trim() === "50g" ? "50g" : "100g";
+      const price50 = Number(form.price50 || 0);
+      const price100 = Number(form.price100 || 0);
       const stockQty50 = Number(form.stockQty50 || 0);
       const stockQty100 = Number(form.stockQty100 || 0);
-      const stockQty = stockQty50 + stockQty100;
-      const price100 = Number(form.price100 || 0);
-      const price50 = Number(form.price50 || 0);
-      if (!Number.isFinite(price50) || price50 <= 0 || !Number.isFinite(price100) || price100 <= 0) {
-        showToast("❌ Enter valid prices for both 50g and 100g.");
+      const activePrice =
+        activePackType === "carton"
+          ? activeWeight === "50g"
+            ? price50
+            : price100
+          : activeWeight === "50g"
+            ? price50
+            : price100;
+      if (!Number.isFinite(activePrice) || activePrice <= 0) {
+        showToast(`❌ Enter a valid price for ${activePackType === "carton" ? "carton" : activeWeight}.`);
         setSaving(false);
         return;
       }
 
       const patch: Partial<Product> = {
+        packType: activePackType,
         name: form.name.trim(),
         subtitle: form.subtitle.trim(),
-        price: price100,
-        price50,
-        price100,
-        weight: form.weight.trim(),
+        price: activePrice,
+        price50:
+          activeWeight === "50g" && Number.isFinite(price50) && price50 > 0
+            ? price50
+            : undefined,
+        price100:
+          Number.isFinite(price100) && price100 > 0
+            ? price100
+            : undefined,
+        weight: activeWeight,
         badge: form.badge.trim(),
         tagline: form.tagline.trim(),
         description: form.description.trim(),
@@ -940,14 +1104,25 @@ export default function AdminPage(){
         twBorder: form.twBorder,
         twAccentBg: form.twAccentBg,
         imageUrl: form.imageUrl || undefined,
-        stockQty,
-        stockQty50,
-        stockQty100,
+        stockQty50:
+          activePackType === "pouch" && activeWeight === "50g" && Number.isFinite(stockQty50) && stockQty50 >= 0
+            ? stockQty50
+            : 0,
+        stockQty100:
+          activePackType === "pouch" && activeWeight === "100g" && Number.isFinite(stockQty100) && stockQty100 >= 0
+            ? stockQty100
+            : 0,
+        stockQty:
+          activePackType === "carton" && Number.isFinite(activeWeight === "50g" ? stockQty50 : stockQty100) && (activeWeight === "50g" ? stockQty50 : stockQty100) >= 0
+            ? (activeWeight === "50g" ? stockQty50 : stockQty100)
+            : 0,
       };
 
       if (addingNew) {
-        const slug = patch.name!.toLowerCase().replace(/\s+/g, "-");
+        const slugBase = patch.name!.toLowerCase().replace(/\s+/g, "-");
+        const slug = `${slugBase}-${activePackType === "carton" ? `carton-${activeWeight}` : activeWeight}`;
         await addProduct({
+          packType: (patch as any).packType,
           slug,
           name: patch.name!,
           subtitle: patch.subtitle!,
@@ -966,7 +1141,7 @@ export default function AdminPage(){
           imageUrl: patch.imageUrl,
           price50: (patch as any).price50,
           price100: (patch as any).price100,
-          stockQty: patch.stockQty ?? 0,
+          stockQty: (patch as any).stockQty ?? 0,
           stockQty50: (patch as any).stockQty50 ?? 0,
           stockQty100: (patch as any).stockQty100 ?? 0,
         });
@@ -1384,15 +1559,37 @@ export default function AdminPage(){
               >
                 <div>
                   <p className="text-sm font-semibold text-stone-600 mb-4">
-                    Catalog ({filteredProducts.length})
+                    Catalog ({sortedFilteredProducts.length})
+                  </p>
+                  <p className="text-xs text-stone-500 mb-4">
+                    Drag cards to reorder storefront placement.
                   </p>
                   <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filteredProducts.map((p) => (
+                    {sortedFilteredProducts.map((p) => (
                       <div
                         key={p.id}
+                        draggable={!searchQuery.trim() && !reorderingProducts}
+                        onDragStart={() => setDraggingProductId(p.id)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverProductId(p.id);
+                        }}
+                        onDragLeave={() => setDragOverProductId((curr) => (curr === p.id ? null : curr))}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          void handleReorderDrop(p.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggingProductId(null);
+                          setDragOverProductId(null);
+                        }}
                         onClick={() => openEdit(p)}
                         className={`cursor-pointer transition-all ${
                           editingId === p.id ? "ring-2 ring-amber-500 ring-offset-2 rounded-lg" : ""
+                        } ${
+                          dragOverProductId === p.id ? "ring-2 ring-blue-400 ring-offset-2 rounded-lg" : ""
+                        } ${
+                          draggingProductId === p.id ? "opacity-60" : ""
                         }`}
                       >
                         <AdminProductCard

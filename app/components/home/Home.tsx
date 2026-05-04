@@ -17,7 +17,6 @@ export function Hero({ onScrollToShop, onScrollToAbout }: HeroProps){
   const [isAutoPlay, setIsAutoPlay] = useState(true);
 
   const heroImages = [
-    "/images/p.png",
     "/images/Coconut_Coated.png",
     "/images/Pepper_Spiced.png",
   ];

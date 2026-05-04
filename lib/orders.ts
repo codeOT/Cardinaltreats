@@ -32,9 +32,18 @@ export interface DBOrder {
   status:          OrderStatus;
   paystackReference: string;
   deliveryAddress?: any;
+  paidAt?:         string;
   createdAt:       string;
   updatedAt:       string;
 }
+
+/** Shown in admin / revenue: Paystack success has been confirmed (not pending checkout or cancelled). */
+export const ADMIN_VISIBLE_ORDER_STATUSES: OrderStatus[] = [
+  "paid",
+  "processing",
+  "shipped",
+  "delivered",
+];
 
 export async function createOrder(
   input: CreateOrderInput
@@ -44,8 +53,8 @@ export async function createOrder(
   const now = new Date().toISOString();
   const doc: DBOrder = {
     ...input,
-    // Default to processing so UI shows the correct badge immediately.
-    status:    "processing",
+    // Remains pending until Paystack confirms payment (webhook or verify/confirm).
+    status:    "pending",
     createdAt: now,
     updatedAt: now,
   };
@@ -82,6 +91,44 @@ export async function findOrderByReference(reference: string): Promise<DBOrder |
   return (await orders.findOne({ paystackReference: reference })) as DBOrder | null;
 }
 
+/** Remove checkout rows that never completed payment (only pending or cancelled). */
+export async function deleteUnpaidOrderByReference(reference: string): Promise<boolean> {
+  const orders = await getCollection<DBOrder>("orders");
+  const res = await orders.deleteOne({
+    paystackReference: reference,
+    status: { $in: ["pending", "cancelled"] },
+  } as any);
+  return res.deletedCount > 0;
+}
+
+/**
+ * Purge abandoned checkouts and failed-payment rows (cron / manual).
+ * Does not remove cancelled orders that were paid then cancelled (have paidAt).
+ */
+export async function purgeStaleUnpaidOrders(pendingMaxAgeMs: number): Promise<{
+  deletedStalePending: number;
+  deletedUnpaidCancelled: number;
+}> {
+  const orders = await getCollection<DBOrder>("orders");
+  const cutoff = new Date(Date.now() - pendingMaxAgeMs).toISOString();
+
+  const stalePending = await orders.deleteMany({
+    status: "pending",
+    createdAt: { $lt: cutoff },
+  } as any);
+
+  const unpaidCancelled = await orders.deleteMany({
+    status: "cancelled",
+    $or: [{ paidAt: { $exists: false } }, { paidAt: null }],
+    createdAt: { $lt: cutoff },
+  } as any);
+
+  return {
+    deletedStalePending: stalePending.deletedCount,
+    deletedUnpaidCancelled: unpaidCancelled.deletedCount,
+  };
+}
+
 export async function getUserOrders(
   userId: string
 ): Promise<(Omit<DBOrder, "_id"> & { _id: string })[]> {
@@ -99,7 +146,9 @@ export async function getUserOrders(
 
 export async function getAdminOrderSummary() {
   const orders = await getCollection<DBOrder>("orders");
-  const all = await orders.find({}).toArray();
+  const all = await orders
+    .find({ status: { $in: ADMIN_VISIBLE_ORDER_STATUSES } } as any)
+    .toArray();
   const totalRevenue = all.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const statusCounts: Record<OrderStatus, number> = {
     pending: 0,

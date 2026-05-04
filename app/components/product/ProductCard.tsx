@@ -21,6 +21,8 @@ function Ring({ cls = "" }: { cls?: string }){
 
 export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
   const weightNum = Number(String(p.weight || "").replace(/[^\d]/g, ""));
+  const isCarton =
+    (p as any).packType === "carton" || String(p.weight || "").toLowerCase().includes("pack");
   const displayPrice =
     weightNum === 50
       ? Number((p as any).price50 ?? p.price)
@@ -28,20 +30,45 @@ export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
         ? Number((p as any).price100 ?? p.price)
         : Number(p.price);
 
-  const stock50 = (p as any).stockQty50 ?? (p as any).stockQty ?? null;
-  const stock100 = (p as any).stockQty100 ?? (p as any).stockQty ?? null;
+  const rawStock50 = (p as any).stockQty50;
+  const rawStock100 = (p as any).stockQty100;
+  const rawLegacyStock = (p as any).stockQty;
+  const has50Field = rawStock50 != null;
+  const has100Field = rawStock100 != null;
+  const inStock50 = has50Field ? Number(rawStock50) > 0 : false;
+  const inStock100 = has100Field ? Number(rawStock100) > 0 : false;
+  const hasWeight50 = weightNum === 50;
+  const hasWeight100 = weightNum === 100;
   const hasAnyStock =
-    stock50 == null && stock100 == null
-      ? true
-      : Number(stock50 ?? 0) > 0 || Number(stock100 ?? 0) > 0;
-
-  const canQuickAdd100 =
-    stock100 == null ? true : Number(stock100 ?? 0) > 0;
+    isCarton
+      ? rawLegacyStock == null
+        ? true
+        : Number(rawLegacyStock) > 0
+      : hasWeight50
+      ? has50Field
+        ? inStock50
+        : rawLegacyStock == null
+          ? true
+          : Number(rawLegacyStock) > 0
+      : hasWeight100
+        ? has100Field
+          ? inStock100
+          : rawLegacyStock == null
+            ? true
+            : Number(rawLegacyStock) > 0
+        : has50Field || has100Field
+          ? inStock50 || inStock100
+          : rawLegacyStock == null
+            ? true
+            : Number(rawLegacyStock) > 0;
 
   return (
     <motion.div
       className={`card-hover relative rounded-3xl overflow-hidden cursor-pointer border ${p.twBorder} ${p.twBg} flex flex-col`}
-      onClick={() => onOpen(p)}
+      onClick={() => {
+        if (!hasAnyStock) return;
+        onOpen(p);
+      }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
@@ -54,6 +81,7 @@ export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
           {p.badge}
         </span>
       </div>
+     
 
       {/* Illustration or custom image */}
       <div className="relative h-48 flex items-center justify-center pt-8 overflow-hidden">
@@ -63,7 +91,7 @@ export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
             alt={p.name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover absolute inset-0"
+            className="w-full h-[200px] object-contain absolute inset-0 "
           />
         ) : (
           <>
@@ -84,23 +112,30 @@ export function ProductCard({ product: p, onOpen, onAdd }: ProductCardProps){
         <h3 className="font-display text-xl font-bold text-stone-800 mb-1">{p.name}</h3>
         <p className="text-stone-400 text-xs leading-relaxed mb-4 flex-1">{p.tagline}</p>
         <div className="flex items-center justify-between">
-          <div>
-            <p className="font-bold text-stone-800 text-lg leading-none">{fmt(displayPrice)}</p>
+        <div>
+       <div className="flex items-center gap-2 ">
+             <p className="font-bold text-stone-800 text-lg leading-none">{fmt(displayPrice)}</p>
+             {!hasAnyStock && (
+        <div className="-mt-2">
+          <span className="text-[7px] tracking-[.08em] uppercase px-1 py-1 rounded-full text-rose-600 ">
+           Sold Out
+          </span>
+        </div>
+      )}
+       </div>
+
             <p className="text-stone-400 text-[10px] mt-0.5">{p.weight}</p>
           </div>
           <motion.button
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               if (!hasAnyStock) return;
-              // Quick add defaults to 100g; if 100g is out but 50g is available, open modal instead.
-              if (!canQuickAdd100) {
-                onOpen(p);
-                return;
-              }
               onAdd(p);
             }}
             disabled={!hasAnyStock}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-transform hover:scale-110 active:scale-95"
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-transform active:scale-95 ${
+              hasAnyStock ? "hover:scale-110" : "opacity-40 cursor-not-allowed"
+            }`}
             style={{ background: p.dotColor }}
             whileTap={{ scale: 0.9 }}
           >

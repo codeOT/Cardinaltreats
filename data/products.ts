@@ -25,7 +25,7 @@ export const PRODUCTS: Product[] = [
     id: 3, slug: "Pepper",
     name: " Pepper", subtitle: "The Bold One",
     price: 4800, weight: "250g", badge: "Fan Fav",
-    tagline: "For those who like it interesting.",
+    tagline: "For those who like it hot.",
     dotColor: "#44403C", emoji: "🌶️",
     twBg: "bg-stone-100", twText: "text-stone-700", twBorder: "border-stone-300", twAccentBg: "bg-stone-700",
     description: "Coarsely cracked black pepper over perfectly roasted cashews. A snack with character warm, punchy, and completely irresistible.",

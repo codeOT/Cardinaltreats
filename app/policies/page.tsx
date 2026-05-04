@@ -38,8 +38,9 @@ export default function PoliciesPage() {
           <section className="space-y-3">
             <h2 className="font-semibold text-stone-900">Delivery Policy</h2>
             <ul className="text-sm text-stone-600 leading-relaxed list-disc pl-5 space-y-2">
+              
               <li>Standard delivery timelines vary by location and logistics conditions.</li>
-              <li>Please ensure your delivery address and phone number are accurate.</li>
+              <li>Delivery fees are the responsibility of the customer and are determined based on the delivery location.</li>
               <li>If delivery fails due to incorrect details, additional charges may apply.</li>
               <li>Delivery timelines are estimates and may be affected by weather, traffic, or carrier delays.</li>
             </ul>

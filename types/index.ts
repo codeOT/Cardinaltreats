@@ -1,5 +1,7 @@
 export interface Product {
   id:         number;
+  sortOrder?: number;
+  packType?:  "pouch" | "carton";
   slug:       string;
   name:       string;
   subtitle:   string;
@@ -92,6 +94,7 @@ export interface Order {
   couponCode?:     string;
   status:          OrderStatus;
   paystackReference: string;
+  paidAt?:         string;
   shippingAddress?:  ShippingAddress;
   deliveryAddress?:  DeliveryAddress;
   createdAt:       string;

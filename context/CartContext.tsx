@@ -18,13 +18,18 @@ type CartAction =
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD": {
+      const isCarton =
+        (action.product as any).packType === "carton" ||
+        String((action.product as any).weight || "").toLowerCase().includes("pack");
       const inferredFromWeight = Number(
         String((action.product as any).weight || "").replace(/[^\d]/g, "")
       );
       const grams =
-        action.selectedGrams ??
-        ((action.product as any).selectedGrams as number | undefined) ??
-        (inferredFromWeight === 50 || inferredFromWeight === 100 ? inferredFromWeight : 100);
+        isCarton
+          ? undefined
+          : action.selectedGrams ??
+            ((action.product as any).selectedGrams as number | undefined) ??
+            (inferredFromWeight === 50 || inferredFromWeight === 100 ? inferredFromWeight : 100);
       const custom50 = Number((action.product as any).price50);
       const custom100 = Number((action.product as any).price100);
       const hasCustom50 = Number.isFinite(custom50) && custom50 > 0;
@@ -35,8 +40,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const basePricePer100 =
         (action.product as any).basePricePer100 ??
         (hasCustom100 ? custom100 : hasPrice100 ? action.product.price : action.product.price);
-      const unitPrice =
-        grams === 50
+      const unitPrice = isCarton
+        ? Number(action.product.price)
+        : grams === 50
           ? hasPrice50
             ? custom50
             : action.product.price
@@ -47,8 +53,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const stock50 = (action.product as any).stockQty50;
       const stock100 = (action.product as any).stockQty100;
       const stockLegacy = (action.product as any).stockQty;
-      const available =
-        grams === 50
+      const available = isCarton
+        ? Number(stockLegacy ?? 0) > 0
+        : grams === 50
           ? Number(stock50 ?? stockLegacy ?? 0) > 0
           : Number(stock100 ?? stockLegacy ?? 0) > 0;
       if (!available) {
@@ -56,11 +63,19 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return state;
       }
 
-      const existing = state.items.find((i) => i.id === action.product.id && (i.selectedGrams ?? 100) === grams);
+      const existing = state.items.find((i) =>
+        i.id === action.product.id &&
+        ((i as any).packType === "carton"
+          ? isCarton
+          : (i.selectedGrams ?? 100) === grams)
+      );
       if (existing) {
         return {
           items: state.items.map((i) =>
-            i.id === action.product.id && (i.selectedGrams ?? 100) === grams
+            i.id === action.product.id &&
+            (((i as any).packType === "carton"
+              ? isCarton
+              : (i.selectedGrams ?? 100) === grams))
               ? { ...i, qty: i.qty + action.qty }
               : i
           ),
@@ -72,7 +87,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         selectedGrams: grams,
         basePricePer100,
         price: unitPrice,
-        weight: `${grams}g`,
+        weight: isCarton ? action.product.weight : `${grams}g`,
       };
       return { items: [...state.items, newItem] };
     }
@@ -88,6 +103,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         items: state.items.map((i) => {
           if (i.id !== action.id) return i;
+          if ((i as any).packType === "carton" || String(i.weight || "").toLowerCase().includes("pack")) {
+            return i;
+          }
           const grams = action.grams;
 
           const stock50 = (i as any).stockQty50;
@@ -160,6 +178,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (Array.isArray(parsed)) {
           // Basic shape check
           const items: CartItem[] = parsed.map((item) => {
+            const isCarton =
+              (item as any).packType === "carton" ||
+              String(item.weight || "").toLowerCase().includes("pack");
+            if (isCarton) {
+              return {
+                ...item,
+                selectedGrams: undefined,
+                basePricePer100: undefined,
+                price: Number(item.price),
+              };
+            }
             const grams = item.selectedGrams ?? 100;
             const custom50 = Number((item as any).price50);
             const custom100 = Number((item as any).price100);

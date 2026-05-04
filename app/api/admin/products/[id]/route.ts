@@ -24,6 +24,8 @@ export async function PATCH(
   }
 
   const allowed: (keyof Product)[] = [
+    "packType",
+    "sortOrder",
     "slug",
     "name",
     "subtitle",

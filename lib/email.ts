@@ -370,3 +370,60 @@ export async function sendSignupVerificationCodeEmail(params: {
     throw new Error(error.message || "Resend failed to send verification email");
   }
 }
+
+// ─── Distributor lead notification ────────────────────────────────────────────
+export async function sendDistributorLeadNotification(params: {
+  name: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  message?: string;
+}): Promise<void> {
+  const { name, businessName, email, phone, city, state, message } = params;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="font-family:Arial,sans-serif;background:#f9f8f7;margin:0;padding:32px 16px;">
+  <table width="560" cellpadding="0" cellspacing="0"
+    style="margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #eee;">
+    <tr>
+      <td style="background:#111827;padding:20px 24px;">
+        <h1 style="margin:0;color:#fff;font-size:18px;font-weight:800;">New Distributor Lead</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px;">
+        <p style="margin:0 0 16px;color:#374151;font-size:14px;">
+          A new "Be a Distributor" form submission was received.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#111827;">
+          <tr><td style="padding:8px 0;font-weight:700;width:140px;">Name</td><td style="padding:8px 0;">${name}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;">Business</td><td style="padding:8px 0;">${businessName}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;">Email</td><td style="padding:8px 0;">${email}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;">Phone</td><td style="padding:8px 0;">${phone}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;">City</td><td style="padding:8px 0;">${city}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;">State</td><td style="padding:8px 0;">${state}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;vertical-align:top;">Message</td><td style="padding:8px 0;">${message || "-"}</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: getFromEmail(),
+    to: ["sales@cardinaltorch.com"],
+    subject: `New Distributor Lead: ${businessName} (${name})`,
+    html,
+    replyTo: email,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Resend failed to send distributor lead email");
+  }
+}

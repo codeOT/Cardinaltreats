@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import { sendOrderConfirmation } from "@/lib/email";
+import { deleteUnpaidOrderByReference } from "@/lib/orders";
 import type { ObjectId } from "mongodb";
 
 interface DBOrder {
@@ -86,17 +87,15 @@ export async function GET(req: NextRequest) {
         orderId: String(order._id),
       });
     } else {
-      // Only cancel if Paystack explicitly says it failed/abandoned
-      const failed = ["failed", "abandoned"].includes(txnStatus);
+      // Drop unpaid checkout rows so they never linger in the database
+      const failed = ["failed", "abandoned"].includes(String(txnStatus || ""));
       if (failed) {
-        await orders.updateOne(
-          { paystackReference: ref },
-          { $set: { status: "cancelled" } }
-        );
+        await deleteUnpaidOrderByReference(ref);
       }
       return NextResponse.json({
         success: false,
-        status:  failed ? "cancelled" : txnStatus,
+        status: failed ? "removed" : txnStatus,
+        deleted: failed,
       });
     }
   } catch (err) {

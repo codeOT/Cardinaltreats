@@ -39,7 +39,7 @@ export default function ContactPage() {
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <p className="text-stone-400 text-xs mb-1">WhatsApp</p>
                 <a
-                  href="https://wa.me/2340000000000"
+                  href="https://wa.me/+2349040244449"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold text-stone-800 hover:text-amber-600"

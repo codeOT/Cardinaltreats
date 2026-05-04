@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { findOrderByReference, updateOrderStatus } from "@/lib/orders";
+import { deleteUnpaidOrderByReference, findOrderByReference, type DBOrder } from "@/lib/orders";
 import { getCollection } from "@/lib/db";
 import { sendOrderConfirmation } from "@/lib/email";
 
@@ -27,7 +27,15 @@ export async function POST(req: Request) {
   }
 
   const event = JSON.parse(rawBody);
-  if (event.event !== "charge.success") {
+  const eventName = String(event.event || "");
+
+  if (eventName === "charge.failed") {
+    const ref = event.data?.reference as string | undefined;
+    if (ref) await deleteUnpaidOrderByReference(ref);
+    return NextResponse.json({ received: true });
+  }
+
+  if (eventName !== "charge.success") {
     return NextResponse.json({ received: true });
   }
 
@@ -41,7 +49,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  await updateOrderStatus(String(order._id), "processing");
+  const ordersCol = await getCollection<DBOrder>("orders");
+  const paidAt = new Date().toISOString();
+  await ordersCol.updateOne(
+    { _id: order._id } as any,
+    {
+      $set: {
+        status: "processing",
+        updatedAt: paidAt,
+        paidAt: (order as any).paidAt || paidAt,
+      },
+    } as any
+  );
 
   const users = await getCollection<DBUser>("users");
   const user = await users.findOne({ _id: order.userId as any }).catch(() => null);

@@ -70,6 +70,11 @@ export function Footer({ onProductClick }: FooterProps) {
                 </Link>
               </li>
               <li>
+                <Link href="/be-a-distributor" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">
+                  Be a Distributor
+                </Link>
+              </li>
+              <li>
                 <Link href="/policies" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">
                   Refund & Delivery Policy
                 </Link>
